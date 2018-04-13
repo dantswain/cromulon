@@ -42,7 +42,7 @@ defmodule Cromulon.Discovery.Postgres do
     conn = Bolt.conn()
     cypher = """
     MATCH (d:Database { name: $database, url: $url })
-    MERGE (t:Table { name: $table })-[:TABLE]-(d)
+    MERGE (t:Table { name: $table })-[:has_table]->(d)
     """
     Bolt.query(conn, cypher, %{table: table, database: database, url: url})
 
@@ -62,7 +62,7 @@ defmodule Cromulon.Discovery.Postgres do
       cypher = """
       MATCH (t:Table { name: $table })
       MATCH (c:Column {name: $column_name, data_type: $data_type })
-      MERGE (c)-[:COLUMN]-(t)
+      MERGE (t)-[:has_column]->(c)
       """
       Bolt.query(conn, cypher, params)
     end
