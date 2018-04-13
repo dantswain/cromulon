@@ -1,0 +1,14 @@
+version: '2.1'
+
+services:
+  sifitest:
+    image: dcdocker1.simpli.fi:5000/simplifi-test:20171012144628
+    ports:
+      - 5433:5432
+  neo4j:
+    image: neo4j:3.3.3
+    environment:
+      - NEO4J_AUTH=none
+    ports:
+      - 7474:7474
+      - 7687:7687
