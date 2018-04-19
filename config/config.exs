@@ -9,6 +9,9 @@ use Mix.Config
 config :cromulon,
   ecto_repos: [Cromulon.Repo]
 
+config :cromulon, Cromulon.Repo,
+  priv: "priv/repo"
+
 # Configures the endpoint
 config :cromulon, CromulonWeb.Endpoint,
   url: [host: "localhost"],

@@ -23,6 +23,7 @@ config :cromulon, Cromulon.Repo,
 
 # Configure your database
 config :cromulon, CromulonDiscoveryTest.Repo,
+  priv: "priv/discovery_repo",
   adapter: Ecto.Adapters.Postgres,
   username: "postgres",
   password: "postgres",
