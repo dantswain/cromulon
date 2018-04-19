@@ -6,6 +6,15 @@ defmodule CromulonDiscoveryTest.PostgresTest do
   alias Cromulon.Discovery.Postgres.Database
   alias Cromulon.Discovery.Postgres.Table
 
+  setup do
+    conn = Bolt.Sips.conn()
+    Bolt.Sips.query!(conn, "MATCH (n) DETACH DELETE n")
+
+    on_exit fn ->
+      Bolt.Sips.query!(conn, "MATCH (n) DETACH DELETE n")
+    end
+  end
+
   def pg_url() do
     "postgres://postgres@localhost/postgres"
   end

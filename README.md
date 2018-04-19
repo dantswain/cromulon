@@ -15,6 +15,14 @@ Standard Phoenix workflow applies here:
   * Install Node.js dependencies with `cd assets && npm install`
   * Compile with `mix compile`
 
+You can run the application tests by running
+
+```
+mix test
+```
+
+**CAUTION** The tests currently delete everything from the graph database.
+
 ## Functionality
 
 This is very much a work in progress.  Some things to play with so far:
