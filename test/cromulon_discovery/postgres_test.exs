@@ -1,17 +1,19 @@
 defmodule CromulonDiscoveryTest.PostgresTest do
   use ExUnit.Case
 
+  alias Bolt.Sips
+
   alias Cromulon.Discovery.Postgres, as: PGDiscovery
   alias Cromulon.Discovery.Postgres.Column
   alias Cromulon.Discovery.Postgres.Database
   alias Cromulon.Discovery.Postgres.Table
 
   setup do
-    conn = Bolt.Sips.conn()
-    Bolt.Sips.query!(conn, "MATCH (n) DETACH DELETE n")
+    conn = Sips.conn()
+    Sips.query!(conn, "MATCH (n) DETACH DELETE n")
 
     on_exit fn ->
-      Bolt.Sips.query!(conn, "MATCH (n) DETACH DELETE n")
+      Sips.query!(conn, "MATCH (n) DETACH DELETE n")
     end
   end
 
@@ -87,5 +89,27 @@ defmodule CromulonDiscoveryTest.PostgresTest do
   test "merging a database to the graph" do
     crawled_db = PGDiscovery.crawl_database(db())
     PGDiscovery.merge_database_to_graph(crawled_db)
-  end
+
+    [n] = Sips.query!(
+      Sips.conn(),
+      "MATCH (d:Database { name: $name }) RETURN (d)",
+      %{name: "cromulon_discovery_test"}
+    )
+    assert n["d"].properties["url"] == url()
+
+    [n] = Sips.query!(
+      Sips.conn(),
+      "MATCH (d:Database) -[:has_table]-> (t:Table {name: $name}) RETURN (t)",
+      %{name: "customers"}
+    )
+    assert n["t"]
+
+    [n] = Sips.query!(
+      Sips.conn(),
+      "MATCH (t:Table {name: $table_name}) -[:has_column]-> " <>
+        "(c:Column {name: $column_name}) RETURN (c)",
+      %{table_name: "customers", column_name: "name"}
+    )
+    assert n["c"].properties["data_type"] == "character varying"
+   end
 end
