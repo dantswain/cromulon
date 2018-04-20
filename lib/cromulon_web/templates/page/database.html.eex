@@ -1,0 +1,8 @@
+<h1><%= @database_name %></h1>
+
+<h2>Tables</h2>
+<ul>
+  <%= for table <- @tables do %>
+    <li><a href="table?name=<%= table.properties["name"] %>"><%= table.properties["name"] %></a></li>
+  <% end %>
+</ul>

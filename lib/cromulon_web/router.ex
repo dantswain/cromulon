@@ -17,6 +17,10 @@ defmodule CromulonWeb.Router do
     pipe_through :browser # Use the default browser stack
 
     get "/", PageController, :index
+
+    # HACK should use a real resource controller
+    get "/database", PageController, :database
+    get "/table", PageController, :table
   end
 
   # Other scopes may use custom stacks.

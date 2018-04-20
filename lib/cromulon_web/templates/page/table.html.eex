@@ -1,0 +1,8 @@
+<h1><%= @table_name %></h1>
+
+<h2>Columns</h2>
+<ul>
+  <%= for column <- @columns do %>
+    <li><%= column.properties["name"] %> - <%= column.properties["data_type"]%></li>
+  <% end %>
+</ul>
