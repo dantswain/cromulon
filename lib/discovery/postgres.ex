@@ -149,7 +149,7 @@ defmodule Cromulon.Discovery.Postgres do
 
       cypher = """
       MATCH (t:Table { name: $table })
-      MATCH (c:Column {name: $column_name, data_type: $data_type })
+      MATCH (c:Column {name: $column_name, data_type: $data_type, table_name: $table })
       MERGE (t)-[:has_column]->(c)
       """
       Bolt.query!(conn, cypher, params)
