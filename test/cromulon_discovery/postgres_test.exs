@@ -64,7 +64,7 @@ defmodule CromulonDiscoveryTest.PostgresTest do
   test "listing tables in a database" do
     tables = PGDiscovery.list_tables(db())
 
-    assert Enum.map(tables, &(&1.name)) == ["schema_migrations", "customers"]
+    assert Enum.map(tables, &(&1.name)) == ["schema_migrations", "customers", "contacts"]
   end
 
   test "describing database tables" do
@@ -79,11 +79,20 @@ defmodule CromulonDiscoveryTest.PostgresTest do
   test "crawling a database" do
     crawled_db = PGDiscovery.crawl_database(db())
 
-    assert length(crawled_db.tables) == 2
+    assert length(crawled_db.tables) == 3
     customers = find_by_name(crawled_db.tables, "customers")
     assert %Table{} = customers
     id = find_by_name(customers.columns, "id")
     assert %Column{} = id
+  end
+
+  test "discoverying foreign keys" do
+    crawled_db = PGDiscovery.crawl_database(db())
+
+    [fk] = crawled_db.foreign_keys
+    assert fk.from_table == "contacts"
+    assert fk.to_table == "customers"
+    assert fk.from_column == "customer_id"
   end
 
   test "merging a database to the graph" do
@@ -111,5 +120,12 @@ defmodule CromulonDiscoveryTest.PostgresTest do
       %{table_name: "customers", column_name: "name"}
     )
     assert n["c"].properties["data_type"] == "character varying"
+
+    [r] = Sips.query!(
+      Sips.conn(),
+      "MATCH (c:Column) -[:foreign_key]-> (t:Table) RETURN (c), (t)"
+    )
+    assert r["c"].properties["name"] == "customer_id"
+    assert r["t"].properties["name"] == "customers"
    end
 end

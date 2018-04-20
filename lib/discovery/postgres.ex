@@ -1,4 +1,15 @@
 defmodule Cromulon.Discovery.Postgres do
+  defmodule ForeignKey do
+    use Ecto.Schema
+
+    @primary_key false
+    schema "foreign_keys" do
+      field :from_table, :string
+      field :from_column, :string
+      field :to_table, :string
+    end
+  end
+
   defmodule Column do
     use Ecto.Schema
 
@@ -33,6 +44,7 @@ defmodule Cromulon.Discovery.Postgres do
       field :url, :string
       field :name, :string
       embeds_many :tables, Cromulon.Discovery.Postgres.Table
+      embeds_many :foreign_keys, Cromulon.Discovery.Postgres.ForeignKey
     end
 
     def from_url(url) do
@@ -61,7 +73,37 @@ defmodule Cromulon.Discovery.Postgres do
         %{table | columns: describe_columns(db, table)}
       end
     )
-    %{db | tables: tables}
+    db = %{db | tables: tables}
+    fks = discover_foreign_keys(db)
+    %{db | foreign_keys: fks}
+  end
+
+  def discover_foreign_keys(db = %Database{}) do
+    table_names = Enum.map(db.tables, &(&1.name))
+    db.tables
+    |> Enum.map(fn(table) -> table_foreign_keys(table, table_names) end)
+    |> List.flatten
+    |> Enum.filter(&(&1))
+  end
+
+  def table_foreign_keys(table, table_names) do
+    Enum.map(table.columns, fn(column) ->
+      case fk_table(column.name, table_names) do
+        nil -> nil
+        to_table ->
+          %ForeignKey{from_table: table.name, from_column: column.name, to_table: to_table}
+      end
+    end)
+  end
+
+  def fk_table(column_name, tables) do
+    case String.split(column_name, "_id") do
+      [pre_id, ""] ->
+        Enum.find(tables, fn(t) ->
+          (pre_id == t) || (pre_id <> "s" == t)
+        end)
+      _ -> nil
+    end
   end
 
   def merge_database_to_graph(db = %Database{}) do
@@ -73,6 +115,10 @@ defmodule Cromulon.Discovery.Postgres do
 
     for table <- db.tables do
       merge_table_to_graph(table, db)
+    end
+
+    for fk <- db.foreign_keys do
+      merge_fk_to_graph(fk)
     end
   end
 
@@ -97,7 +143,7 @@ defmodule Cromulon.Discovery.Postgres do
       }
 
       cypher = """
-      MERGE (c:Column { name: $column_name, data_type: $data_type })
+      MERGE (c:Column { name: $column_name, data_type: $data_type, table_name: $table })
       """
       Bolt.query!(conn, cypher, params)
 
@@ -108,6 +154,21 @@ defmodule Cromulon.Discovery.Postgres do
       """
       Bolt.query!(conn, cypher, params)
     end
+  end
+
+  def merge_fk_to_graph(fk) do
+    conn = Bolt.conn()
+    cypher = """
+    MATCH (t:Table { name: $to_table })
+    MATCH (c:Column { name: $from_column, table_name: $from_table })
+    MERGE (c) -[:foreign_key]-> (t)
+    """
+    params = %{
+      to_table: fk.to_table,
+      from_column: fk.from_column,
+      from_table: fk.from_table
+    }
+    Bolt.query!(conn, cypher, params)
   end
 
   def list_databases(url) do
