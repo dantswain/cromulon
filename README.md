@@ -31,8 +31,14 @@ This is very much a work in progress.  Some things to play with so far:
 * Launch docker containers: `docker-compose up -d` (probably want to
   `docker-compose pull` if you don't have the images already).
 * Launch the app with an iex shell: `iex -S mix phx.server`
-* Crawl the attached sifi database: `> Cromulon.Discovery.Postgres.crawl_database("postgres://postgres@localhost:5433/simplifi-test")`
-* Open the neo4j browser: http://localhost:7474/ and explore the graph.
+* Crawl a database (assumes you have 'simplifi-development' running locally):
+  ```
+  iex(1)> db = Cromulon.Discovery.Postgres.Database.from_url("postgres://postgres@localhost/simplifi-development")
+  iex(2)> db = Cromulon.Discovery.Postgres.crawl_database(db)
+  iex(3)> Cromulon.Discovery.Postgres.merge_database_to_graph(db)
+  ```
+* Open your browser to http://localhost:4000 and explore the UI
+* Open the neo4j browser: http://localhost:7474/ to explore the graph.
     - Show a subset of all nodes: `MATCH (n) RETURN n`
     - Show all tables and the database: `MATCH (n) WHERE n:Table OR n:Database RETURN n`
     - Show columns with the same name in multiple tables:
