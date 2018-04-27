@@ -3,7 +3,7 @@
 <h2>References</h2>
 <ul>
   <%= for fk_inbound <- @fks_inbound do %>
-    <li><%= fk_inbound.properties["table_name"] %> - <%= fk_inbound.properties["name"] %></li>
+    <li><a href="<%= table_link(fk_inbound.properties["table_name"]) %>"><%= fk_inbound.properties["table_name"] %></a> - <%= fk_inbound.properties["name"] %></li>
   <% end %>
 </ul>
 
@@ -13,7 +13,7 @@
     <li>
       <%= column.properties["name"] %> - <%= column.properties["data_type"]%>
       <%= if @fks_outbound[column.properties["name"]] do %>
-        (Foriegn key to <%= @fks_outbound[column.properties["name"]] %>)
+        (Foriegn key: <a href="<%= table_link(@fks_outbound[column.properties["name"]]) %>"><%= @fks_outbound[column.properties["name"]] %></a>)
       <% end %>
     </li>
   <% end %>
