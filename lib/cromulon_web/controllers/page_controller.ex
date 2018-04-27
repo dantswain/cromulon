@@ -1,6 +1,8 @@
 defmodule CromulonWeb.PageController do
   use CromulonWeb, :controller
 
+  require Logger
+
   alias Bolt.Sips
 
   def index(conn, _params) do
@@ -25,13 +27,45 @@ defmodule CromulonWeb.PageController do
 
   def table(conn, %{"name" => table_name}) do
     bolt = Sips.conn()
-    tables = bolt
-             |> Sips.query!(
-               "MATCH (t:Table {name: $table_name}) -[:has_column]-> (c:Column) RETURN (c)",
-               %{table_name: table_name}
-             )
-             |> Enum.map(fn(%{"c" => c}) -> c end)
-    render conn, "table.html", %{columns: tables, table_name: table_name}
+    columns = bolt
+              |> Sips.query!(
+                "MATCH (t:Table {name: $table_name}) -[:has_column]-> (c:Column) RETURN (c)",
+                %{table_name: table_name}
+              )
+              |> Enum.map(fn(%{"c" => c}) -> c end)
+
+    fk_out_cypher = """
+    MATCH (t:Table {name: $table_name}) -[:has_column]-> (c:Column) -[:foreign_key]-> (ot:Table)
+    RETURN c, ot
+    """
+    fks_outbound = bolt
+                   |> Sips.query!(fk_out_cypher, %{table_name: table_name})
+                   |> Enum.map(fn(%{"c" => c, "ot" => ot}) ->
+                     {c.properties["name"], ot.properties["name"]}
+                   end)
+                   |> Enum.into(%{})
+
+    Logger.debug(fn -> "OUTBOUND: #{inspect fks_outbound}" end)
+
+    fk_in_cypher = """
+    MATCH (t:Table {name: $table_name}) <-[:foreign_key]- (c:Column)
+    RETURN c
+    """
+    fks_inbound = bolt
+                  |> Sips.query!(fk_in_cypher, %{table_name: table_name})
+                  |> Enum.map(fn(%{"c" => c}) -> c end)
+    Logger.debug(fn -> "INBOUND #{inspect fks_inbound}" end)
+
+    render(
+      conn,
+      "table.html",
+      %{
+        columns: columns,
+        table_name: table_name,
+        fks_outbound: fks_outbound,
+        fks_inbound: fks_inbound
+      }
+    )
   end
 
 end
