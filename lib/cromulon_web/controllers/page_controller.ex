@@ -14,46 +14,54 @@ defmodule CromulonWeb.PageController do
   end
 
   # HACK should use a real resource controller
-  def database(conn, %{"name" => database_name}) do
+  def database(conn, %{"database_id" => database_id}) do
     bolt = Sips.conn()
-    tables = bolt
-             |> Sips.query!(
-               "MATCH (d:Database {name: $database_name}) -[:has_table]-> (t:Table) RETURN (t)",
-               %{database_name: database_name}
-             )
-             |> Enum.map(fn(%{"t" => t}) -> t end)
-    render conn, "database.html", %{tables: tables, database_name: database_name}
+
+    cypher = """
+    MATCH (d:Database) -[:has_table]-> (t:Table)
+    WHERE ID(d) = $database_id RETURN d, collect(t) AS ts
+    """
+
+    [result] = Sips.query!(bolt, cypher, %{database_id: String.to_integer(database_id)})
+    tables = result["ts"]
+    database = result["d"]
+
+    render conn, "database.html", %{tables: tables, database: database}
   end
 
-  def table(conn, %{"name" => table_name}) do
+  def table(conn, %{"table_id" => table_id}) do
+    table_id = String.to_integer(table_id)
     bolt = Sips.conn()
-    columns = bolt
-              |> Sips.query!(
-                "MATCH (t:Table {name: $table_name}) -[:has_column]-> (c:Column) RETURN (c)",
-                %{table_name: table_name}
-              )
-              |> Enum.map(fn(%{"c" => c}) -> c end)
+
+    cypher = """
+    MATCH (t) -[:has_column]-> (c)
+    WHERE ID(t) = $table_id
+    RETURN t, collect(c) AS cs
+    """
+    [result] = Sips.query!(bolt, cypher, %{table_id: table_id})
+    table = result["t"]
+    columns = result["cs"]
 
     fk_out_cypher = """
-    MATCH (t:Table {name: $table_name}) -[:has_column]-> (c:Column) -[:foreign_key]-> (ot:Table)
-    RETURN c, ot
+    MATCH (t) -[:has_column]-> (c) -[:foreign_key]-> (ft:Table)
+    WHERE ID(t) = $table_id
+    RETURN c.name AS column_name, ft AS foreign_table
     """
     fks_outbound = bolt
-                   |> Sips.query!(fk_out_cypher, %{table_name: table_name})
-                   |> Enum.map(fn(%{"c" => c, "ot" => ot}) ->
-                     {c.properties["name"], ot.properties["name"]}
-                   end)
+                   |> Sips.query!(fk_out_cypher, %{table_id: table_id})
+                   |> Enum.map(
+                     fn(%{"column_name" => column_name, "foreign_table" => foreign_table}) ->
+                         {column_name, foreign_table}
+                     end)
                    |> Enum.into(%{})
 
-    Logger.debug(fn -> "OUTBOUND: #{inspect fks_outbound}" end)
-
     fk_in_cypher = """
-    MATCH (t:Table {name: $table_name}) <-[:foreign_key]- (c:Column)
-    RETURN c
+    MATCH (t) <-[:foreign_key]- (c) <-[:has_column]- (ft)
+    WHERE ID(t) = $table_id
+    RETURN c.name AS column_name, ft AS foreign_table
     """
-    fks_inbound = bolt
-                  |> Sips.query!(fk_in_cypher, %{table_name: table_name})
-                  |> Enum.map(fn(%{"c" => c}) -> c end)
+    fks_inbound = Sips.query!(bolt, fk_in_cypher, %{table_id: table_id})
+
     Logger.debug(fn -> "INBOUND #{inspect fks_inbound}" end)
 
     render(
@@ -61,7 +69,7 @@ defmodule CromulonWeb.PageController do
       "table.html",
       %{
         columns: columns,
-        table_name: table_name,
+        table: table,
         fks_outbound: fks_outbound,
         fks_inbound: fks_inbound
       }

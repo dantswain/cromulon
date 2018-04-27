@@ -1,5 +1,5 @@
 Databases:
 <ul>
 <%= for database <- @databases do %>
-  <li><a href="/database?name=<%= database.properties["name"] %>"><%= database.properties["name"] %></a></li>
+  <li><a href="<%= database_path(database)%>"><%= database.properties["name"] %></a></li>
 <% end %>

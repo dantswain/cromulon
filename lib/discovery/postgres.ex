@@ -100,7 +100,7 @@ defmodule Cromulon.Discovery.Postgres do
     case String.split(column_name, "_id") do
       [pre_id, ""] ->
         Enum.find(tables, fn(t) ->
-          (pre_id == t) || (pre_id <> "s" == t)
+          (pre_id == t) || (Inflex.pluralize(pre_id) == t)
         end)
       _ -> nil
     end

@@ -20,7 +20,8 @@ defmodule CromulonWeb.Router do
 
     # HACK should use a real resource controller
     get "/database", PageController, :database
-    get "/table", PageController, :table
+    get "/database/:database_id", PageController, :database
+    get "/table/:table_id", PageController, :table
   end
 
   # Other scopes may use custom stacks.

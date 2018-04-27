@@ -1,7 +1,13 @@
 defmodule CromulonWeb.PageView do
   use CromulonWeb, :view
 
-  def table_link(table_name) when is_binary(table_name) do
-    "/table?name=#{table_name}"
+  alias Bolt.Sips.Types.Node
+
+  def database_path(%Node{id: id}) do
+    "/database/#{id}"
+  end
+
+  def table_path(%Node{id: table_id}) do
+    "/table/#{table_id}"
   end
 end
