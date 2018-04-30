@@ -1,5 +1,7 @@
 <h1><%= @database.properties["name"] %></h1>
 
+uri: <%= @database.properties["url"] %>
+
 <h2>Tables</h2>
 <ul>
   <%= for table <- @tables do %>

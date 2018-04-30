@@ -34,11 +34,12 @@ defmodule CromulonWeb.PageController do
     bolt = Sips.conn()
 
     cypher = """
-    MATCH (t) -[:has_column]-> (c)
+    MATCH (d) -[:has_table]-> (t) -[:has_column]-> (c)
     WHERE ID(t) = $table_id
-    RETURN t, collect(c) AS cs
+    RETURN d, t, collect(c) AS cs
     """
     [result] = Sips.query!(bolt, cypher, %{table_id: table_id})
+    database = result["d"]
     table = result["t"]
     columns = result["cs"]
 
@@ -68,6 +69,7 @@ defmodule CromulonWeb.PageController do
       conn,
       "table.html",
       %{
+        database: database,
         columns: columns,
         table: table,
         fks_outbound: fks_outbound,

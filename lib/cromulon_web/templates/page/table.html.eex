@@ -1,5 +1,7 @@
 <h1><%= @table.properties["name"] %></h1>
 
+In <a href="<%= database_path(@database) %>"><%= @database.properties["name"] %></a>
+
 <h2>References</h2>
 <ul>
   <%= for fk_inbound <- @fks_inbound do %>
