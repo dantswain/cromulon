@@ -1,3 +1,9 @@
+Add a data source:
+<%= form_for @conn, page_path(@conn, :new_database), [as: :data_source], fn f -> %>
+  <%= text_input f, :uri %>
+  <%= submit "Add" %>
+<% end %>
+
 Databases:
 <ul>
 <%= for database <- @databases do %>
