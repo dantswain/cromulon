@@ -32,6 +32,12 @@ config :bolt_sips, Bolt,
   pool_size: 10,
   max_overflow: 5
 
+# kafka
+config :kafka_ex,
+  disable_default_worker: true,
+  use_ssl: false,
+  consumer_group: :no_consumer_group
+
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
 import_config "#{Mix.env}.exs"

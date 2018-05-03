@@ -5,6 +5,20 @@ services:
     image: dcdocker1.simpli.fi:5000/simplifi-test:20171012144628
     ports:
       - 5433:5432
+  zookeeper:
+    image: wurstmeister/zookeeper:3.4.6
+    ports:
+      - "2181:2181"
+  kafka:
+    image: wurstmeister/kafka:0.11.0.0
+    ports:
+      - "9092:9092"
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_HOST_NAME: "127.0.0.1"
+      KAFKA_CREATE_TOPICS: "cromulon_test_users:4:1,cromulon_test_customers:8:1"
   neo4j:
     image: neo4j:3.3.3
     environment:

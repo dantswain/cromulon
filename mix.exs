@@ -42,6 +42,7 @@ defmodule Cromulon.Mixfile do
       {:gettext, "~> 0.11"},
       {:bolt_sips, "~> 0.4"},
       {:cowboy, "~> 1.0"},
+      {:kafka_ex, "~> 0.8.2"},
       {:inflex, "~> 1.10.0"}
     ]
   end
