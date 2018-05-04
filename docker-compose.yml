@@ -18,7 +18,7 @@ services:
     environment:
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_ADVERTISED_HOST_NAME: "127.0.0.1"
-      KAFKA_CREATE_TOPICS: "cromulon_test_users:4:1,cromulon_test_customers:8:1"
+      KAFKA_CREATE_TOPICS: "sales_events:4:1,log_events:8:1"
   neo4j:
     image: neo4j:3.3.3
     environment:

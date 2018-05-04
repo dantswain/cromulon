@@ -1,5 +1,8 @@
 defmodule Cromulon.Discovery.Kafka do
+  @moduledoc false
+
   defmodule Topic do
+    @moduledoc false
     use Ecto.Schema
 
     @primary_key false
@@ -12,6 +15,8 @@ defmodule Cromulon.Discovery.Kafka do
   end
 
   defmodule Cluster do
+    @moduledoc false
+
     use Ecto.Schema
 
     @primary_key false
