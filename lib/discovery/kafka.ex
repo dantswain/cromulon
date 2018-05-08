@@ -9,6 +9,7 @@ defmodule Cromulon.Discovery.Kafka do
     schema "kafka_topics" do
       field :name, :string
       field :partition_count, :integer
+      embeds_many :schema, :map
       embeds_many :partition_ids, {:array, :integer}
       embeds_many :sample_messages, {:array, :string}
     end
@@ -43,6 +44,7 @@ defmodule Cromulon.Discovery.Kafka do
     end
   end
 
+  alias Cromulon.SchemaInference
   alias KafkaEx.Protocol.Metadata.TopicMetadata
 
   require Logger
@@ -65,6 +67,14 @@ defmodule Cromulon.Discovery.Kafka do
       end)
       %{cluster | topics: topics}
     end)
+  end
+
+  def infer_schemas(cluster) do
+    topics = Enum.map(cluster.topics, fn(topic) ->
+      schema = SchemaInference.from_sample_messages(topic.sample_messages)
+      %{topic | schema: schema}
+    end) 
+    %{cluster | topics: topics}
   end
 
   defp get_topic_sample_messages(topic, worker, lookback) do
