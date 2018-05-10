@@ -15,11 +15,21 @@ use Mix.Config
 # which you typically run after static files are built.
 config :cromulon, CromulonWeb.Endpoint,
   load_from_system_env: true,
-  url: [host: "example.com", port: 80],
+  http: [port: {:system, "PORT"}],
+  url: [host: "localhost", port: {:system, "PORT"}],
+  server: true,
+  root: ".",
   cache_static_manifest: "priv/static/cache_manifest.json"
 
 # Do not print debug messages in production
 config :logger, level: :info
+
+# neo4j
+config :bolt_sips, Bolt,
+  hostname: 'neo4j',
+  port: 7687,
+  pool_size: 10,
+  max_overflow: 5
 
 # ## SSL Support
 #

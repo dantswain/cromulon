@@ -10,6 +10,7 @@ defmodule Cromulon.Mixfile do
       compilers: [:phoenix, :gettext] ++ Mix.compilers,
       start_permanent: Mix.env == :prod,
       aliases: aliases(),
+      build_path: build_path(),
       deps: deps()
     ]
   end
@@ -28,6 +29,10 @@ defmodule Cromulon.Mixfile do
   defp elixirc_paths(:test), do: ["lib", "test/support", "test/cromulon_discovery"]
   defp elixirc_paths(_),     do: ["lib"]
 
+  defp build_path do
+    System.get_env("CROMULON_BUILD_PATH") || "_build"
+  end
+
   # Specifies your project dependencies.
   #
   # Type `mix help deps` for examples and options.
@@ -44,6 +49,7 @@ defmodule Cromulon.Mixfile do
       {:cowboy, "~> 1.0"},
       {:credo, "~> 0.9.2"},
       {:kafka_ex, "~> 0.8.2"},
+      {:distillery, "~>1.5.2"},
       {:inflex, "~> 1.10.0"}
     ]
   end

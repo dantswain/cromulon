@@ -1,10 +1,6 @@
 version: '2.1'
 
 services:
-  sifitest:
-    image: dcdocker1.simpli.fi:5000/simplifi-test:20171012144628
-    ports:
-      - 5433:5432
   zookeeper:
     image: wurstmeister/zookeeper:3.4.6
     ports:
@@ -26,3 +22,19 @@ services:
     ports:
       - 7474:7474
       - 7687:7687
+  node:
+    image: node:6.5.0
+    command: /bin/true
+    working_dir: /cromulon
+    volumes:
+      - ./:/cromulon
+  elixir:
+    image: elixir:1.6.5
+    working_dir: /cromulon
+    command: /bin/true
+    environment:
+      HEX_HOME: /cromulon/.hex/docker
+      MIX_HOME: /cromulon/.mix/docker
+      CROMULON_BUILD_PATH: /cromulon/docker_build
+    volumes:
+      - ./:/cromulon

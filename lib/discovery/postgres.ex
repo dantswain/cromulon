@@ -7,6 +7,7 @@ defmodule Cromulon.Discovery.Postgres do
       field :from_table, :string
       field :from_column, :string
       field :to_table, :string
+      field :uuid, :string
     end
   end
 
@@ -17,6 +18,7 @@ defmodule Cromulon.Discovery.Postgres do
     schema "columns" do
       field :name, :string
       field :data_type, :string
+      field :uuid, :string
     end
   end
 
@@ -26,6 +28,7 @@ defmodule Cromulon.Discovery.Postgres do
     @primary_key false
     schema "tables" do
       field :name, :string
+      field :uuid, :string
       embeds_many :columns, Cromulon.Discovery.Postgres.Column
     end
 
@@ -39,10 +42,16 @@ defmodule Cromulon.Discovery.Postgres do
   defmodule Database do
     use Ecto.Schema
 
+    alias Cromulon.Schema
+    alias Cromulon.Schema.Edge
+    alias Cromulon.Schema.Node
+    alias Cromulon.Schema.Source
+
     @primary_key false
     schema "databases" do
       field :url, :string
       field :name, :string
+      field :uuid, :string
       embeds_many :tables, Cromulon.Discovery.Postgres.Table
       embeds_many :foreign_keys, Cromulon.Discovery.Postgres.ForeignKey
     end
@@ -58,6 +67,60 @@ defmodule Cromulon.Discovery.Postgres do
       parsed_url = URI.parse(url)
       parsed_url = %{parsed_url | path: "/#{database.name}"}
       %{database | url: URI.to_string(parsed_url)}
+    end
+
+    def to_schema(database) do
+      source = %Source{
+        name: database.name,
+        connection_info: database.url,
+        kind: "PostgreSQL database",
+        uuid: Ecto.UUID.generate()
+      }
+
+      tables_schema = build_tables_schema(database.tables)
+    end
+
+    defp build_tables_schema(tables) do
+      Enum.map(tables, fn(table) ->
+        build_table_schema(table)
+      end)
+    end
+
+    defp build_table_schema(table) do
+      table_node = %Node{
+        name: table.name,
+        kind: "table",
+        uuid: Ecto.UUID.generate()
+      }
+
+      column_nodes = Enum.map(table.columns, &column_node/1)
+      edges = Enum.map(column_nodes, &column_edge(&1, table_node))
+
+      {table_node, column_nodes, edges}
+    end
+
+    defp table_nodes(tables) do
+      Enum.map(tables, fn(table) ->
+        table_node(table)
+      end)
+    end
+
+    defp column_node(column) do
+      %Node{
+        name: column.name,
+        kind: "column",
+        types: column.data_type,
+        uuid: Ecto.UUID.generate()
+      }
+    end
+
+    defp column_edge(column, table) do
+      %Edge{
+        from_uuid: column.uuid,
+        to_uuid: table.uuid,
+        uuid: Ecto.UUID.generate(),
+        label: ":HAS_COLUMN"
+      }
     end
   end
 
