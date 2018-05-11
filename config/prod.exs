@@ -22,12 +22,14 @@ config :cromulon, CromulonWeb.Endpoint,
   cache_static_manifest: "priv/static/cache_manifest.json"
 
 # Do not print debug messages in production
-config :logger, level: :info
+# config :logger, level: :info
+
+config :logger, :console, format: "[$level] $message\n"
 
 # neo4j
 config :bolt_sips, Bolt,
-  hostname: 'neo4j',
-  port: 7687,
+  # set via the NEO4J_URL env var
+  url: nil,
   pool_size: 10,
   max_overflow: 5
 

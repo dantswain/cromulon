@@ -36,5 +36,6 @@ services:
       HEX_HOME: /cromulon/.hex/docker
       MIX_HOME: /cromulon/.mix/docker
       CROMULON_BUILD_PATH: /cromulon/docker_build
+      NEO4J_URL: bolt://neo4j:7687
     volumes:
       - ./:/cromulon

@@ -18,7 +18,7 @@ services:
       - "5369:4369"
     environment:
       PORT: 4000
-      CROMULON_BOLT_HOST: neo4j
+      NEO4J_URL: bolt://neo4j:7687
     depends_on:
       neo4j:
         condition: service_started
