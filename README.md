@@ -25,30 +25,40 @@ mix test
 
 ## Functionality
 
-This is very much a work in progress.  Some things to play with so far:
+This is very much a work in progress.  You can launch the app by running
 
-* Follow the directions below on initial setup
-* Launch docker containers: `docker-compose up -d` (probably want to
-  `docker-compose pull` if you don't have the images already).
-* Launch the app with an iex shell: `iex -S mix phx.server`
-* Crawl a database (assumes you have 'simplifi-development' running locally):
-  ```
-  iex(1)> db = Cromulon.Discovery.Postgres.Database.from_url("postgres://postgres@localhost/simplifi-development")
-  iex(2)> db = Cromulon.Discovery.Postgres.crawl_database(db)
-  iex(3)> Cromulon.Discovery.Postgres.merge_database_to_graph(db)
-  ```
-* Open your browser to http://localhost:4000 and explore the UI
-* Open the neo4j browser: http://localhost:7474/ to explore the graph.
-    - Show a subset of all nodes: `MATCH (n) RETURN n`
-    - Show all tables and the database: `MATCH (n) WHERE n:Table OR n:Database RETURN n`
-    - Show columns with the same name in multiple tables:
-        ```
-        MATCH (:Table)-[r]-(c:Column)
-        WITH c, count(r) as rel_count
-        WHERE rel_count > 1
-        MATCH (t:Table)-[]-(c:Column)
-        return t,c
-        ```
+```
+iex -S mix phx.server
+```
+
+Then open your browser to http://localhost:4000 and enter the URI of a database
+to crawl - for example `postgres://postgres@localhost/simplifi-development`.
+After a minute or so, refreshing the page should show your database.
+
+## Deployment to K8s
+
+This assumes you have set up access to the dev k8s and set yourself into
+whatever namespace you want to use.
+
+```
+kubectl -f k8s/neo4j-deployment.yml
+kubectl -f k8s/neo4j-service.yml
+```
+
+Then run `kubectl get services` to find the port that neo4j is exposed on
+and update the port in `k8s/cromulon-deployment.yml` (this step may not be
+necessary if we get some DNS issues worked out).  Then
+
+```
+kubectl -f k8s/cromulon-deployment.yml
+kubectl -f k8s/cromulon-service.yml
+```
+
+Run `kubectl get services` again to find the port that cromulon is exposed on.
+It should be accessible via `http://dal10kubewdev1.int.simpli.fi:<port>/`.
+
+A new version of the image can be built using
+`./scripts/build_docker_image.sh`.
 
 ## Graph model
 

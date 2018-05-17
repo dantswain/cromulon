@@ -1,0 +1,36 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert -f docker-compose.yml
+    kompose.version: 1.12.0 ()
+  creationTimestamp: null
+  labels:
+    io.kompose.service: cromulon
+  name: cromulon
+spec:
+  replicas: 1
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        io.kompose.service: cromulon
+    spec:
+      imagePullSecrets:
+        - name: dcdocker1regsecret
+      containers:
+      - env:
+        - name: NEO4J_URL
+          value: bolt://neo4j:m0data4u@10.176.185.248:31183
+        - name: PORT
+          value: "4000"
+        image: dcdocker1.simpli.fi:5000/cromulon:t4
+        name: cromulon
+        ports:
+        - containerPort: 4000
+        - containerPort: 4369
+        resources: {}
+        workingDir: /cromulon
+      restartPolicy: Always
+status: {}
