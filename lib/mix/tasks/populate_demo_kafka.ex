@@ -8,7 +8,6 @@ defmodule Mix.Tasks.PopulateDemoKafka do
     Application.ensure_all_started(:kafka_ex)
     {:ok, worker} = KafkaEx.create_worker(:cromulon_populator, uris: [{"localhost", 9092}])
 
-
     populate_sales_events(worker)
     populate_log_events(worker)
 
@@ -30,7 +29,10 @@ defmodule Mix.Tasks.PopulateDemoKafka do
           name: "A fun toy!",
           price: 123.45,
           notes: [
-            "This", "is", "a", "list"
+            "This",
+            "is",
+            "a",
+            "list"
           ]
         }
       },

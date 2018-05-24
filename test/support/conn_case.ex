@@ -26,13 +26,11 @@ defmodule CromulonWeb.ConnCase do
     end
   end
 
-
   setup _tags do
-    #:ok = Ecto.Adapters.SQL.Sandbox.checkout(Cromulon.Repo)
-    #unless tags[:async] do
+    # :ok = Ecto.Adapters.SQL.Sandbox.checkout(Cromulon.Repo)
+    # unless tags[:async] do
     #  Ecto.Adapters.SQL.Sandbox.mode(Cromulon.Repo, {:shared, self()})
-    #end
+    # end
     {:ok, conn: Phoenix.ConnTest.build_conn()}
   end
-
 end

@@ -6,19 +6,16 @@
 use Mix.Config
 
 # General application configuration
-config :cromulon,
-  ecto_repos: [Cromulon.Repo]
+config :cromulon, ecto_repos: [Cromulon.Repo]
 
-config :cromulon, Cromulon.Repo,
-  priv: "priv/repo"
+config :cromulon, Cromulon.Repo, priv: "priv/repo"
 
 # Configures the endpoint
 config :cromulon, CromulonWeb.Endpoint,
   url: [host: "localhost"],
   secret_key_base: "lrSinA9FNcAFAyqiDO1D7RsMVA2kBMyQ64m/VadkSY4kYMk+hfo2bKJYYmYt2HFJ",
   render_errors: [view: CromulonWeb.ErrorView, accepts: ~w(html json)],
-  pubsub: [name: Cromulon.PubSub,
-           adapter: Phoenix.PubSub.PG2]
+  pubsub: [name: Cromulon.PubSub, adapter: Phoenix.PubSub.PG2]
 
 # Configures Elixir's Logger
 config :logger, :console,
@@ -40,4 +37,4 @@ config :kafka_ex,
 
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
-import_config "#{Mix.env}.exs"
+import_config "#{Mix.env()}.exs"

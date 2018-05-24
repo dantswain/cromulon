@@ -10,28 +10,35 @@ defmodule Cromulon.SchemaInference do
   end
 
   def infer_schema(messages) do
-    field_names = messages
-                  |> Enum.map(&Map.keys/1)
-                  |> List.flatten
-                  |> Enum.uniq
+    field_names =
+      messages
+      |> Enum.map(&Map.keys/1)
+      |> List.flatten()
+      |> Enum.uniq()
 
-    collected = Enum.reduce(messages, %{}, fn(m, acc) ->
-      Enum.reduce(field_names, acc, fn(f, acc1) ->
-        value = Map.get(m, f)
-        Map.update(acc1, f, [value], fn(ex) -> [value | ex] end)
+    collected =
+      Enum.reduce(messages, %{}, fn m, acc ->
+        Enum.reduce(field_names, acc, fn f, acc1 ->
+          value = Map.get(m, f)
+          Map.update(acc1, f, [value], fn ex -> [value | ex] end)
+        end)
       end)
-    end)
 
     field_names
-    |> Enum.map(fn(f) ->
+    |> Enum.map(fn f ->
       values = Map.get(collected, f)
       type = detect_type(values)
+
       case type do
         [{:list, [:map]}] ->
           flat_values = List.flatten(values)
           {f, {:list, {:map, [infer_schema(flat_values)]}}}
-        [:map] -> {f, {:map, [infer_schema(values)]}}
-        type -> {f, type}
+
+        [:map] ->
+          {f, {:map, [infer_schema(values)]}}
+
+        type ->
+          {f, type}
       end
     end)
     |> Enum.into(%{})
@@ -40,7 +47,7 @@ defmodule Cromulon.SchemaInference do
   def detect_type(values) when is_list(values) do
     values
     |> Enum.map(&type_of/1)
-    |> Enum.uniq
+    |> Enum.uniq()
   end
 
   def type_of(x) when is_integer(x), do: :integer

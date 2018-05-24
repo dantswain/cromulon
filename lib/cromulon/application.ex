@@ -27,9 +27,11 @@ defmodule Cromulon.Application do
 
   def bolt_sips_config() do
     config = Application.get_env(:bolt_sips, Bolt)
+
     case System.get_env("NEO4J_URL") do
       nil ->
         config
+
       neo4j_url ->
         Logger.info(fn -> "Detected Neo4j URL: #{neo4j_url}" end)
         Keyword.put(config, :url, neo4j_url)
