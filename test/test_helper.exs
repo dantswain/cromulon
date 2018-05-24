@@ -1,4 +1,4 @@
 ExUnit.start()
 
-Ecto.Adapters.SQL.Sandbox.mode(Cromulon.Repo, :manual)
+# Ecto.Adapters.SQL.Sandbox.mode(Cromulon.Repo, :manual)
 
