@@ -154,7 +154,9 @@ defmodule Cromulon.Discovery.Postgres do
         [tables, columns, fks]
       end)
 
-    List.flatten([source, schemas, tables_columns_fks])
+    [source, schemas, tables_columns_fks]
+    |> List.flatten()
+    |> Enum.map(&Schema.ensure_uuid(&1))
   end
 
   def describe_source(url) do
