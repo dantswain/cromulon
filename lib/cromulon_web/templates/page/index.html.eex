@@ -1,11 +1,10 @@
-Add a data source:
-<%= form_for @conn, page_path(@conn, :new_database), [as: :data_source], fn f -> %>
-  <%= text_input f, :uri %>
-  <%= submit "Add" %>
-<% end %>
+<h2>Data sources</h2>
 
-Databases:
-<ul>
-<%= for database <- @databases do %>
-  <li><a href="<%= database_path(database)%>"><%= database.properties["name"] %></a></li>
+<%= for {source_kind, sources} <- group_sources(@sources) do %>
+  <%= describe_source_kind_plural(source_kind) %>
+  <ul>
+    <%= for source <- sources do %>
+      <li><%= source_link(source) %></li>
+    <% end %>
+  </ul>
 <% end %>

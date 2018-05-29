@@ -1,0 +1,15 @@
+<h2><%= describe_source_kind(@source) %></h2>
+<h3>Info</h3>
+<dl>
+  <dt>Name</dt>
+  <dd><%= @source.name %></dd>
+  <dt>Connection info</dt>
+  <dd><%= @source.connection_info %></dd>
+</dl>
+
+<h3><%= describe_source_nodes(@source) %></h3>
+<ul>
+  <%= for n <- @nodes do %>
+    <li><%= node_link(n) %></li>
+  <% end %>
+</ul>

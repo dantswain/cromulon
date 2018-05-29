@@ -30,10 +30,69 @@ defmodule Cromulon.Schema do
     Enum.find(list, fn el -> Map.get(el, :uuid) == uuid end)
   end
 
-  def ingest(schema, bolt_conn) when is_list(schema) do
+  def ingest(schema, conn) when is_list(schema) do
     schema
     |> Enum.sort_by(&ingest_sort_order/1)
-    |> Enum.flat_map(&ingest_element(&1, bolt_conn))
+    |> Enum.flat_map(&ingest_element(&1, conn))
+  end
+
+  def list_sources(conn) do
+    cypher = """
+    MATCH (s:Source) RETURN s
+    """
+
+    conn
+    |> Bolt.query!(cypher)
+    |> Enum.map(fn(m) -> Source.from_bolt(Map.get(m, "s")) end)
+  end
+
+  def list_source_nodes(uuid, conn) do
+    cypher = """
+    MATCH (s:Source {uuid: $uuid})<-[]-(n:Node) RETURN s, collect(n) AS nodes
+    """
+
+    [result] = Bolt.query!(conn, cypher, %{"uuid" => uuid})
+    %{
+      source: Source.from_bolt(Map.get(result, "s")),
+      nodes: Enum.map(Map.get(result, "nodes"), &Node.from_bolt/1)
+    }
+  end
+
+  def describe_node(uuid, conn) do
+    cypher = """
+    MATCH (s:Source) <-[*]- (n:Node {uuid: $uuid}) RETURN s, n LIMIT 1
+    """
+
+    [source_result] = Bolt.query!(conn, cypher, %{"uuid" => uuid})
+
+    cypher = """
+    MATCH (:Node {uuid: $uuid}) <-[r]- (n:Node) RETURN r, n
+    """
+    inbound_results = Bolt.query!(conn, cypher, %{"uuid" => uuid})
+    inbound = Enum.map(inbound_results, fn(%{"r" => edge, "n" => node}) -> 
+      %{
+        edge: Edge.from_bolt(edge),
+        node: Node.from_bolt(node)
+      }
+    end)
+
+    cypher = """
+    MATCH (:Node {uuid: $uuid}) -[r]-> (n:Node) RETURN r, n
+    """
+    outbound_results = Bolt.query!(conn, cypher, %{"uuid" => uuid})
+    outbound = Enum.map(outbound_results, fn(%{"r" => edge, "n" => node}) -> 
+      %{
+        edge: Edge.from_bolt(edge),
+        node: Node.from_bolt(node)
+      }
+    end)
+
+    %{
+      source: Source.from_bolt(Map.get(source_result, "s")),
+      node: Node.from_bolt(Map.get(source_result, "n")),
+      inbound: inbound,
+      outbound: outbound
+    }
   end
 
   # The order in which we need to ingest elements in the graph
