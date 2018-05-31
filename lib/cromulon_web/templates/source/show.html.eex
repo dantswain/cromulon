@@ -10,6 +10,6 @@
 <h3><%= describe_source_nodes(@source) %></h3>
 <ul>
   <%= for n <- @nodes do %>
-    <li><%= node_link(n) %></li>
+    <li><%= link(n.name, to: node_path(@conn, :show, n.uuid)) %></li>
   <% end %>
 </ul>

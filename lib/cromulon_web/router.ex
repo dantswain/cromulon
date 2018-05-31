@@ -19,9 +19,8 @@ defmodule CromulonWeb.Router do
 
     get("/", PageController, :index)
 
-    # HACK should use a real resource controller
-    get("/sources/:source_uuid", PageController, :source)
-    get("/nodes/:node_uuid", PageController, :node)
+    resources("/sources", SourceController, param: "source_uuid", except: [:delete])
+    resources("/nodes", NodeController, param: "node_uuid", only: [:show])
   end
 
   # Other scopes may use custom stacks.
