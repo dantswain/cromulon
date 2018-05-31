@@ -1,6 +1,8 @@
 defmodule CromulonWeb.NodeView do
   use CromulonWeb, :view
 
+  import CromulonWeb.SchemaView
+
   alias Cromulon.Schema.Edge
   alias Cromulon.Schema.Node
 

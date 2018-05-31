@@ -4,7 +4,7 @@
   <%= describe_source_kind_plural(source_kind) %>
   <ul>
     <%= for source <- sources do %>
-      <li><%= link(source.name, to: source_path(@conn, :show, source.uuid)) %></li>
+      <li><%= source_link(source, @conn) %></li>
     <% end %>
   </ul>
 <% end %>

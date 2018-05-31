@@ -10,13 +10,13 @@
 <h3>Inbound Relationships</h3>
 <ul>
   <%= for %{edge: edge, node: node} <- @inbound do %>
-    <li><%= describe_inbound_relationship(edge) %> <%= link(node.name, to: node_path(@conn, :show, node.uuid)) %></li>
+    <li><%= describe_inbound_relationship(edge) %> <%= node_link(node, @conn) %></li>
   <% end %>
 </ul>
 
 <h3>Outbound Relationships</h3>
 <ul>
   <%= for %{edge: edge, node: node} <- @outbound do %>
-    <li><%= describe_outbound_relationship(edge) %> <%= link(node.name, to: node_path(@conn, :show, node.uuid)) %></li>
+    <li><%= describe_outbound_relationship(edge) %> <%= node_link(node, @conn) %></li>
   <% end %>
 </ul>

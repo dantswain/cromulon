@@ -1,6 +1,8 @@
 defmodule CromulonWeb.SourceView do
   use CromulonWeb, :view
 
+  import CromulonWeb.SchemaView
+
   alias Cromulon.Schema.Source
 
   def group_sources(sources) when is_list(sources) do
