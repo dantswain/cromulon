@@ -1,0 +1,15 @@
+<h1>Add a new data source</h1>
+
+<h2>Disclaimer</h2>
+This is experimental software.  Adding sources can be resource intensive on Cromulon and it does
+attempt to make connections to external services.  Please make sure that
+<ul>
+  <li>you are not duplicating an existing source </li>
+  <li>discovery queries will not strain the external service </li>
+</ul>
+
+<%= form_for @conn, source_path(@conn, :create), [as: :source], fn f -> %>
+  <%= label(f, :connection_string, "Connection String") %>
+  <%= text_input f, :connection_string %>
+  <%= submit "Add" %>
+<% end %>
