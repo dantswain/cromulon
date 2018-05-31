@@ -4,9 +4,6 @@ defmodule CromulonDiscoveryTest.PostgresTest do
   alias Bolt.Sips
 
   alias Cromulon.Discovery.Postgres, as: PGDiscovery
-  alias Cromulon.Discovery.Postgres.Column
-  alias Cromulon.Discovery.Postgres.Database
-  alias Cromulon.Discovery.Postgres.Table
 
   alias Cromulon.Schema
   alias Cromulon.Schema.Source
@@ -28,10 +25,6 @@ defmodule CromulonDiscoveryTest.PostgresTest do
 
   def url() do
     "postgres://postgres@localhost/cromulon_discovery_test"
-  end
-
-  def db() do
-    Database.from_url(url())
   end
 
   def find_by_name(enum, name) do
@@ -146,107 +139,5 @@ defmodule CromulonDiscoveryTest.PostgresTest do
 
     assert fk_from.name == "customer_id"
     assert fk_to.name == "customers"
-  end
-
-  test "Database from url" do
-    assert db().url == url()
-    assert db().name == "cromulon_discovery_test"
-  end
-
-  test "relocate Database" do
-    relocated_db =
-      Database.relocate(
-        db(),
-        "postgres://other_user@other_host/postgres"
-      )
-
-    assert %Database{
-             name: "cromulon_discovery_test",
-             url: "postgres://other_user@other_host/cromulon_discovery_test"
-           } == relocated_db
-  end
-
-  test "listing databases" do
-    databases = PGDiscovery.list_databases(pg_url())
-
-    cromulon_test = find_by_name(databases, "cromulon_test")
-    assert cromulon_test.url == "postgres://postgres@localhost/cromulon_test"
-
-    cromulon_discovery_test = find_by_name(databases, "cromulon_discovery_test")
-    assert cromulon_discovery_test.url == "postgres://postgres@localhost/cromulon_discovery_test"
-  end
-
-  test "listing tables in a database" do
-    tables = PGDiscovery.list_tables(db())
-
-    assert Enum.map(tables, & &1.name) == ["schema_migrations", "customers", "contacts"]
-  end
-
-  test "describing database tables" do
-    columns = PGDiscovery.describe_columns(db(), %Table{name: "customers"})
-    assert length(columns) == 5
-
-    id = find_by_name(columns, "id")
-    assert %Column{} = id
-    assert id.data_type == "bigint"
-  end
-
-  test "crawling a database" do
-    crawled_db = PGDiscovery.crawl_database(db())
-
-    assert length(crawled_db.tables) == 3
-    customers = find_by_name(crawled_db.tables, "customers")
-    assert %Table{} = customers
-    id = find_by_name(customers.columns, "id")
-    assert %Column{} = id
-  end
-
-  test "discoverying foreign keys" do
-    crawled_db = PGDiscovery.crawl_database(db())
-
-    [fk] = crawled_db.foreign_keys
-    assert fk.from_table == "contacts"
-    assert fk.to_table == "customers"
-    assert fk.from_column == "customer_id"
-  end
-
-  test "merging a database to the graph" do
-    crawled_db = PGDiscovery.crawl_database(db())
-    PGDiscovery.merge_database_to_graph(crawled_db)
-
-    [n] =
-      Sips.query!(Sips.conn(), "MATCH (d:Database { name: $name }) RETURN (d)", %{
-        name: "cromulon_discovery_test"
-      })
-
-    assert n["d"].properties["url"] == url()
-
-    [n] =
-      Sips.query!(
-        Sips.conn(),
-        "MATCH (d:Database) -[:has_table]-> (t:Table {name: $name}) RETURN (t)",
-        %{name: "customers"}
-      )
-
-    assert n["t"]
-
-    [n] =
-      Sips.query!(
-        Sips.conn(),
-        "MATCH (t:Table {name: $table_name}) -[:has_column]-> " <>
-          "(c:Column {name: $column_name}) RETURN (c)",
-        %{table_name: "customers", column_name: "name"}
-      )
-
-    assert n["c"].properties["data_type"] == "character varying"
-
-    [r] =
-      Sips.query!(
-        Sips.conn(),
-        "MATCH (c:Column) -[:foreign_key]-> (t:Table) RETURN (c), (t)"
-      )
-
-    assert r["c"].properties["name"] == "customer_id"
-    assert r["t"].properties["name"] == "customers"
   end
 end
