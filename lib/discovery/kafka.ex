@@ -47,28 +47,68 @@ defmodule Cromulon.Discovery.Kafka do
   alias Cromulon.SchemaInference
   alias KafkaEx.Protocol.Metadata.TopicMetadata
 
+  alias Ecto.UUID
+  alias Cromulon.Schema
+  alias Cromulon.Schema.Edge
+  alias Cromulon.Schema.Node
+  alias Cromulon.Schema.Source
+
   require Logger
 
-  def cluster_from_seed(seed_host, seed_port) do
+  def describe_cluster(seed_host, seed_port) do
     with_kafkaex([{seed_host, seed_port}], fn worker ->
       metadata = KafkaEx.metadata(worker_name: worker)
       topics = Enum.map(metadata.topic_metadatas, &topic_from_metadata/1)
       urls = urls_from_brokers(metadata.brokers)
-      %Cluster{metadata: metadata, urls: urls, topics: topics}
+
+      source = describe_source(seed_host, seed_port, metadata)
+
+      topics = describe_topics(metadata, source, worker)
+
+      List.flatten([source | topics])
     end)
   end
 
-  def get_sample_messages(cluster, lookback \\ 1) do
-    uris = Cluster.uris(cluster)
+  defp describe_source(seed_host, seed_port, metadata) do
+    %Source{
+      name: "#{seed_host}:#{seed_port}",
+      connection_info: urls_from_brokers(metadata.brokers),
+      kind: "kafka cluster",
+      uuid: UUID.generate()
+    }
+  end
 
-    with_kafkaex(uris, fn worker ->
-      topics =
-        Enum.map(cluster.topics, fn topic ->
-          messages = get_topic_sample_messages(topic, worker, lookback)
-          %{topic | sample_messages: messages}
-        end)
+  defp describe_topics(metadata, source, worker) do
+    Enum.map(metadata.topic_metadatas, fn(topic_metadata) ->
+      name = topic_metadata.topic
+      partition_count = length(topic_metadata.partition_metadatas)
 
-      %{cluster | topics: topics}
+      partition_ids =
+        Enum.map(
+          topic_metadata.partition_metadatas,
+          & &1.partition_id
+        )
+
+      node_uuid = UUID.generate()
+      topic_source = [
+        %Node{
+          name: name,
+          kind: "kafka topic",
+          types: "message",
+          attributes: %{partition_ids: Enum.sort(partition_ids)},
+          uuid: node_uuid
+        },
+        %Edge{
+          from_uuid: node_uuid,
+          to_uuid: source.uuid,
+          uuid: UUID.generate(),
+          label: "SOURCE"
+        }
+      ]
+
+      messages = get_topic_sample_messages(name, partition_ids, worker, 3)
+
+      topic_source
     end)
   end
 
@@ -82,22 +122,22 @@ defmodule Cromulon.Discovery.Kafka do
     %{cluster | topics: topics}
   end
 
-  defp get_topic_sample_messages(topic, worker, lookback) do
-    topic.partition_ids
+  defp get_topic_sample_messages(name, partition_ids, worker, lookback) do
+    partition_ids
     |> Enum.map(fn partition_id ->
-      get_partition_sample_messages(topic, partition_id, worker, lookback)
+      get_partition_sample_messages(name, partition_id, worker, lookback)
     end)
     |> List.flatten()
   end
 
-  defp get_partition_sample_messages(topic, partition_id, worker, lookback) do
+  defp get_partition_sample_messages(name, partition_id, worker, lookback) do
     last_offset =
-      topic.name
+      name
       |> KafkaEx.latest_offset(partition_id, worker)
       |> offset_number_from_resp
 
     first_offset =
-      topic.name
+      name
       |> KafkaEx.earliest_offset(partition_id, worker)
       |> offset_number_from_resp
 
@@ -106,10 +146,10 @@ defmodule Cromulon.Discovery.Kafka do
     Logger.debug(fn -> "#{last_offset} #{first_offset} #{offset}" end)
 
     if offset < 0 do
-      Logger.warn(fn -> "Partition #{topic.name}:#{partition_id} has no messages" end)
+      Logger.warn(fn -> "Partition #{name}:#{partition_id} has no messages" end)
       []
     else
-      topic.name
+      name
       |> KafkaEx.fetch(
         partition_id,
         offset: offset,

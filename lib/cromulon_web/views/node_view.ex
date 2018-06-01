@@ -9,6 +9,7 @@ defmodule CromulonWeb.NodeView do
   def describe_node_kind(%Node{kind: "postgres schema"}), do: "Postgres Schema"
   def describe_node_kind(%Node{kind: "table"}), do: "Table"
   def describe_node_kind(%Node{kind: "column"}), do: "Column"
+  def describe_node_kind(%Node{kind: "kafka topic"}), do: "Kafka Topic"
 
   def describe_inbound_relationship(%Edge{label: "TABLE"}), do: "Table"
   def describe_inbound_relationship(%Edge{label: "COLUMN"}), do: "Column"

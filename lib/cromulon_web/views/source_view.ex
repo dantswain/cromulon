@@ -12,10 +12,13 @@ defmodule CromulonWeb.SourceView do
   end
 
   def describe_source_kind_plural("postgres database"), do: "Postgres Databases"
+  def describe_source_kind_plural("kafka cluster"), do: "Kafka Clusters"
   def describe_source_kind_plural(other), do: other
 
   def describe_source_kind(%Source{kind: "postgres database"}), do: "Postgres Database"
+  def describe_source_kind(%Source{kind: "kafka cluster"}), do: "Kafka Cluster"
   def describe_source_kind(other), do: other.kind
 
   def describe_source_nodes(%Source{kind: "postgres database"}), do: "Schemas"
+  def describe_source_nodes(%Source{kind: "kafka cluster"}), do: "Topics"
 end
