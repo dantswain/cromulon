@@ -50,7 +50,10 @@ defmodule Cromulon.Mixfile do
       {:credo, "~> 0.9.2"},
       {:kafka_ex, "~> 0.8.2"},
       {:distillery, "~>1.5.2"},
-      {:inflex, "~> 1.10.0"}
+      {:inflex, "~> 1.10.0"},
+      {:snappy,
+        git: "https://github.com/fdmanana/snappy-erlang-nif.git",
+        ref: "0951a1bf8e58141b3c439bebe1f2992688298631"},
     ]
   end
 

@@ -81,6 +81,7 @@ defmodule Cromulon.Discovery.Kafka do
   defp describe_topics(metadata, source, worker) do
     Enum.map(metadata.topic_metadatas, fn topic_metadata ->
       name = topic_metadata.topic
+      Logger.debug(fn -> "Exploring Kafka topic #{name}" end)
       partition_count = length(topic_metadata.partition_metadatas)
 
       partition_ids =
@@ -91,36 +92,23 @@ defmodule Cromulon.Discovery.Kafka do
 
       node_uuid = UUID.generate()
 
-      topic_source = [
-        %Node{
-          name: name,
-          kind: "kafka topic",
-          types: "message",
-          attributes: %{partition_ids: Enum.sort(partition_ids)},
-          uuid: node_uuid
-        },
-        %Edge{
-          from_uuid: node_uuid,
-          to_uuid: source.uuid,
-          uuid: UUID.generate(),
-          label: "SOURCE"
-        }
-      ]
+      messages = get_topic_sample_messages(name, partition_ids, worker, 2)
 
-      messages = get_topic_sample_messages(name, partition_ids, worker, 3)
+      node = %Node{name: name, kind: "kafka topic", types: "message",
+        attributes: %{partition_ids: Enum.sort(partition_ids)},
+        uuid: node_uuid}
+      edge = %Edge{from_uuid: node_uuid, to_uuid: source.uuid,
+        uuid: UUID.generate(), label: "SOURCE"}
 
-      topic_source
+      if Enum.all?(messages, &String.valid?/1) do
+        node = %{node | attributes: Map.put(node.attributes, :sample_messages, messages)}
+        message_schema = SchemaInference.from_sample_messages(messages, node)
+      else
+        message_schema = []
+      end
+
+      List.flatten([node, edge, message_schema])
     end)
-  end
-
-  def infer_schemas(cluster) do
-    topics =
-      Enum.map(cluster.topics, fn topic ->
-        schema = SchemaInference.from_sample_messages(topic.sample_messages)
-        %{topic | schema: schema}
-      end)
-
-    %{cluster | topics: topics}
   end
 
   defp get_topic_sample_messages(name, partition_ids, worker, lookback) do
@@ -144,21 +132,16 @@ defmodule Cromulon.Discovery.Kafka do
 
     offset = max(first_offset - 1, last_offset - lookback)
 
-    Logger.debug(fn -> "#{last_offset} #{first_offset} #{offset}" end)
-
     if offset < 0 do
       Logger.warn(fn -> "Partition #{name}:#{partition_id} has no messages" end)
       []
     else
-      name
-      |> KafkaEx.fetch(
-        partition_id,
-        offset: offset,
-        worker_name: worker,
-        consumer_group: :no_consumer_group,
-        auto_commit: false
-      )
-      |> messages_from_resp(lookback)
+      resp = KafkaEx.fetch(name, partition_id, offset: offset, worker_name: worker,
+                           consumer_group: :no_consumer_group, auto_commit: false)
+      case resp do
+        [:timeout] -> get_partition_sample_messages(name, partition_id, worker, lookback)
+        [resp] -> messages_from_resp([resp], lookback)
+      end
     end
   end
 
@@ -170,7 +153,6 @@ defmodule Cromulon.Discovery.Kafka do
   end
 
   defp messages_from_resp([resp], max_num) do
-    Logger.debug(fn -> "#{inspect(resp)}" end)
     [partition_resp] = resp.partitions
 
     partition_resp.message_set
@@ -202,16 +184,21 @@ defmodule Cromulon.Discovery.Kafka do
   end
 
   defp with_kafkaex(uris, cb) do
-    {:ok, worker} =
-      KafkaEx.create_worker(
-        :cromulon_discovery,
-        uris: uris
-      )
-
+    {:ok, worker} = start_worker(uris)
+ 
     result = cb.(worker)
 
     KafkaEx.stop_worker(worker)
 
     result
+  end
+
+  defp start_worker(uris) do
+    case KafkaEx.create_worker(:cromulon_discovery, uris: uris) do
+      {:error, {:already_started, pid}} ->
+        :ok = KafkaEx.stop_worker(pid)
+        start_worker(uris)
+      {:ok, worker} -> {:ok, worker}
+    end
   end
 end

@@ -1,15 +1,28 @@
 defmodule Cromulon.SchemaInference do
-  def from_sample_messages(messages) do
+  require Logger
+
+  alias Ecto.UUID
+  alias Cromulon.Schema
+  alias Cromulon.Schema.Node
+  alias Cromulon.Schema.Edge
+
+  def from_sample_messages(messages, parent_node \\ nil) do
     messages = try_json(messages)
 
-    infer_schema(messages)
+    infer_schema(messages, parent_node)
+  rescue
+    e ->
+      Logger.warn(fn ->
+        if parent_node do
+          "Unable to infer schema for #{parent_node.name}: #{inspect e}"
+        else
+          "Unable to infer schema: #{inspect e}"
+        end
+      end)
+      []
   end
 
-  def try_json(messages) do
-    Enum.map(messages, &Poison.decode!/1)
-  end
-
-  def infer_schema(messages) do
+  def infer_schema(messages, parent_node \\ nil) do
     field_names =
       messages
       |> Enum.map(&Map.keys/1)
@@ -24,30 +37,58 @@ defmodule Cromulon.SchemaInference do
         end)
       end)
 
-    field_names
-    |> Enum.map(fn f ->
-      values = Map.get(collected, f)
+    Enum.map(field_names, fn(field_name) ->
+      values = Map.get(collected, field_name)
       type = detect_type(values)
+      node = %Node{uuid: UUID.generate(), name: field_name, kind: "message"}
 
       case type do
         [{:list, [:map]}] ->
           flat_values = List.flatten(values)
-          {f, {:list, {:map, [infer_schema(flat_values)]}}}
+          message_schema = infer_schema(flat_values, node)
+          if parent_node do
+            edge = %Edge{from_uuid: node.uuid, to_uuid: parent_node.uuid,
+              label: "MESSAGE", uuid: UUID.generate()}
+            [%{node | types: "List of message"}, edge, message_schema]
+          else
+            [%{node | types: "message"}, message_schema]
+          end
 
         [:map] ->
-          {f, {:map, [infer_schema(values)]}}
+          message_schema = infer_schema(values, node)
+          if parent_node do
+            edge = %Edge{from_uuid: node.uuid, to_uuid: parent_node.uuid,
+              label: "MESSAGE", uuid: UUID.generate()}
+            [%{node | types: "message"}, edge, message_schema]
+          else
+            [%{node | types: "message"}, message_schema]
+          end
 
         type ->
-          {f, type}
+          if parent_node do
+            edge = %Edge{from_uuid: node.uuid, to_uuid: parent_node.uuid,
+              label: "MESSAGE", uuid: UUID.generate()}
+            [%{node | types: type_label(type)}, edge]
+          else
+            %{node | types: type_label(type)}
+          end
       end
     end)
-    |> Enum.into(%{})
   end
+
+  defp try_json(messages) do
+    Enum.map(messages, &Poison.decode!/1)
+  end
+
+  defp type_label({:list, x}), do: "List of " <> Enum.join(type_label(x), ",")
+  defp type_label(x) when is_list(x), do: Enum.map(x, &type_label/1)
+  defp type_label(x), do: Atom.to_string(x)
 
   def detect_type(values) when is_list(values) do
     values
     |> Enum.map(&type_of/1)
     |> Enum.uniq()
+    |> Enum.sort()
   end
 
   def type_of(x) when is_integer(x), do: :integer
