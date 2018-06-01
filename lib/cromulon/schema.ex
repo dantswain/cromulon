@@ -43,7 +43,7 @@ defmodule Cromulon.Schema do
 
     conn
     |> Bolt.query!(cypher)
-    |> Enum.map(fn(m) -> Source.from_bolt(Map.get(m, "s")) end)
+    |> Enum.map(fn m -> Source.from_bolt(Map.get(m, "s")) end)
   end
 
   def list_source_nodes(uuid, conn) do
@@ -52,6 +52,7 @@ defmodule Cromulon.Schema do
     """
 
     [result] = Bolt.query!(conn, cypher, %{"uuid" => uuid})
+
     %{
       source: Source.from_bolt(Map.get(result, "s")),
       nodes: Enum.map(Map.get(result, "nodes"), &Node.from_bolt/1)
@@ -68,24 +69,30 @@ defmodule Cromulon.Schema do
     cypher = """
     MATCH (:Node {uuid: $uuid}) <-[r]- (n:Node) RETURN r, n
     """
+
     inbound_results = Bolt.query!(conn, cypher, %{"uuid" => uuid})
-    inbound = Enum.map(inbound_results, fn(%{"r" => edge, "n" => node}) -> 
-      %{
-        edge: Edge.from_bolt(edge),
-        node: Node.from_bolt(node)
-      }
-    end)
+
+    inbound =
+      Enum.map(inbound_results, fn %{"r" => edge, "n" => node} ->
+        %{
+          edge: Edge.from_bolt(edge),
+          node: Node.from_bolt(node)
+        }
+      end)
 
     cypher = """
     MATCH (:Node {uuid: $uuid}) -[r]-> (n:Node) RETURN r, n
     """
+
     outbound_results = Bolt.query!(conn, cypher, %{"uuid" => uuid})
-    outbound = Enum.map(outbound_results, fn(%{"r" => edge, "n" => node}) -> 
-      %{
-        edge: Edge.from_bolt(edge),
-        node: Node.from_bolt(node)
-      }
-    end)
+
+    outbound =
+      Enum.map(outbound_results, fn %{"r" => edge, "n" => node} ->
+        %{
+          edge: Edge.from_bolt(edge),
+          node: Node.from_bolt(node)
+        }
+      end)
 
     %{
       source: Source.from_bolt(Map.get(source_result, "s")),

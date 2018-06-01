@@ -6,8 +6,8 @@ defmodule CromulonWeb.SourceView do
   alias Cromulon.Schema.Source
 
   def group_sources(sources) when is_list(sources) do
-    Enum.reduce(sources, %{}, fn(source, acc) ->
-      Map.update(acc, source.kind, [source], fn(x) -> [source | x] end)
+    Enum.reduce(sources, %{}, fn source, acc ->
+      Map.update(acc, source.kind, [source], fn x -> [source | x] end)
     end)
   end
 

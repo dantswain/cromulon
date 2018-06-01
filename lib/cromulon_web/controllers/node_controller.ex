@@ -12,7 +12,11 @@ defmodule CromulonWeb.NodeController do
 
     result = Schema.describe_node(node_uuid, bolt)
 
-    render(conn, "show.html", %{source: result.source, node: result.node,
-      inbound: result.inbound, outbound: result.outbound})
+    render(conn, "show.html", %{
+      source: result.source,
+      node: result.node,
+      inbound: result.inbound,
+      outbound: result.outbound
+    })
   end
 end

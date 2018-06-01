@@ -35,7 +35,8 @@ defmodule Cromulon.SchemaTest do
     edges = Schema.select_edges(full_schema)
 
     all_nodes = Bolt.query!(conn, "MATCH (n) RETURN n")
-    assert length(all_nodes) == length(nodes) + 1  # +1 for the source
+    # +1 for the source
+    assert length(all_nodes) == length(nodes) + 1
     all_edges = Bolt.query!(conn, "MATCH ()<-[r]-() RETURN r")
     assert length(all_edges) == length(edges)
 
@@ -44,7 +45,8 @@ defmodule Cromulon.SchemaTest do
     assert length(inserted) == length(full_schema)
 
     all_nodes = Bolt.query!(conn, "MATCH (n) RETURN n")
-    assert length(all_nodes) == length(nodes) + 1  # +1 for the source
+    # +1 for the source
+    assert length(all_nodes) == length(nodes) + 1
     all_edges = Bolt.query!(conn, "MATCH ()<-[r]-() RETURN r")
     assert length(all_edges) == length(edges)
   end

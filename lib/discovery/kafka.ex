@@ -79,7 +79,7 @@ defmodule Cromulon.Discovery.Kafka do
   end
 
   defp describe_topics(metadata, source, worker) do
-    Enum.map(metadata.topic_metadatas, fn(topic_metadata) ->
+    Enum.map(metadata.topic_metadatas, fn topic_metadata ->
       name = topic_metadata.topic
       partition_count = length(topic_metadata.partition_metadatas)
 
@@ -90,6 +90,7 @@ defmodule Cromulon.Discovery.Kafka do
         )
 
       node_uuid = UUID.generate()
+
       topic_source = [
         %Node{
           name: name,
