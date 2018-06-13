@@ -1,22 +1,35 @@
-<%= describe_node_kind(@node) %>
+<h2><%= describe_node_kind(@node) %></h2>
+
 <h3>Info</h3>
 <dl>
-  <dt>Name</dt>
-  <dd><%= @node.name %></dd>
-  <dt>Source</dt>
-  <dd><%= link(@source.name, to: source_path(@conn, :show, @source.uuid)) %></dd>
+  <%= for {dt, dd} <- node_info(@node, @source, @conn) do %>
+    <dt><%= dt %></dt>
+    <dd><%= dd %></dd>
+  <% end %>
 </dl>
 
-<h3>Inbound Relationships</h3>
-<ul>
-  <%= for %{edge: edge, node: node} <- @inbound do %>
-    <li><%= describe_inbound_relationship(edge) %> <%= node_link(node, @conn) %></li>
-  <% end %>
-</ul>
+<%= if map_size(@inbound_by_label) > 0 do %>
+<h3>Child Elements</h3>
 
-<h3>Outbound Relationships</h3>
+<%= for {label, inbound} <- @inbound_by_label do %> 
+<h4><%= describe_inbound_relationships(label, length(inbound)) %></h4>
 <ul>
-  <%= for %{edge: edge, node: node} <- @outbound do %>
-    <li><%= describe_outbound_relationship(edge) %> <%= node_link(node, @conn) %></li>
+  <%= for %{node: node} <- inbound do %>
+    <li><%= node_link(node, @conn) %> - <%= child_node_info(node) %></li>
   <% end %>
 </ul>
+<% end %>
+<% end %>
+
+<%= if map_size(@outbound_by_label) > 0 do %>
+<h3>Other Relationships</h3>
+
+<%= for {label, outbound} <- @outbound_by_label do %> 
+<h4><%= describe_outbound_relationships(label, length(outbound)) %></h4>
+<ul>
+  <%= for %{node: node} <- outbound do %>
+    <li><%= node_link(node, @conn) %></li>
+  <% end %>
+</ul>
+<% end %>
+<% end %>

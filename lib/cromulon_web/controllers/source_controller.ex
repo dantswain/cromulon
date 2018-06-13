@@ -6,6 +6,7 @@ defmodule CromulonWeb.SourceController do
   alias Bolt.Sips
 
   alias Cromulon.Discovery.Postgres, as: PGDiscovery
+  alias Cromulon.Discovery.Kafka, as: KafkaDiscovery
   alias Cromulon.Schema
 
   def index(conn, _params) do
@@ -30,7 +31,17 @@ defmodule CromulonWeb.SourceController do
 
   def create(conn, %{"source" => source}) do
     bolt = Sips.conn()
-    schema = PGDiscovery.describe_database(source["connection_string"])
+
+    schema =
+      case source["type"] do
+        "postgres" ->
+          PGDiscovery.describe_database(source["connection_string"])
+
+        "kafka" ->
+          port = String.to_integer(source["port"])
+          KafkaDiscovery.describe_cluster(source["host"], port)
+      end
+
     Schema.ingest(schema, bolt)
 
     redirect(conn, to: source_path(conn, :index))

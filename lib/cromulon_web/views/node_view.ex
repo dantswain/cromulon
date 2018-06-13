@@ -3,22 +3,62 @@ defmodule CromulonWeb.NodeView do
 
   import CromulonWeb.SchemaView
 
-  alias Cromulon.Schema.Edge
   alias Cromulon.Schema.Node
+  alias Cromulon.Schema.Source
 
-  def describe_node_kind(%Node{kind: "postgres schema"}), do: "Postgres Schema"
-  def describe_node_kind(%Node{kind: "table"}), do: "Table"
-  def describe_node_kind(%Node{kind: "column"}), do: "Column"
-  def describe_node_kind(%Node{kind: "kafka topic"}), do: "Kafka Topic"
-  def describe_node_kind(%Node{kind: "message"}), do: "Message"
+  @outbound_mapping %{
+    "TABLE" => "schema",
+    "COLUMN" => "table",
+    "FOREIGN_KEY" => "foreign table",
+    "MESSAGE" => "parent message"
+  }
 
-  def describe_inbound_relationship(%Edge{label: "TABLE"}), do: "Table"
-  def describe_inbound_relationship(%Edge{label: "COLUMN"}), do: "Column"
-  def describe_inbound_relationship(%Edge{label: "FOREIGN_KEY"}), do: "Foreign Key"
-  def describe_inbound_relationship(%Edge{label: "MESSAGE"}), do: "Message"
+  def node_info(node = %Node{}, source = %Source{}, conn) do
+    common_node_info(node, source, conn) ++ specific_node_info(node, source, conn)
+  end
 
-  def describe_outbound_relationship(%Edge{label: "TABLE"}), do: "Schema"
-  def describe_outbound_relationship(%Edge{label: "COLUMN"}), do: "Table"
-  def describe_outbound_relationship(%Edge{label: "FOREIGN_KEY"}), do: "Foreign Table"
-  def describe_outbound_relationship(%Edge{label: "MESSAGE"}), do: "Parent Message"
+  def describe_node_kind(%Node{kind: kind}), do: titleize(kind)
+
+  def child_node_info(node = %Node{}), do: node.types
+
+  def describe_inbound_relationships(name, len) do
+    name
+    |> titleize
+    |> Inflex.inflect(len)
+  end
+
+  def describe_outbound_relationships(name, len) do
+    @outbound_mapping
+    |> Map.get(name, name)
+    |> titleize
+    |> Inflex.inflect(len)
+  end
+
+  defp titleize(name) do
+    name
+    |> String.split(["_", " "])
+    |> Enum.map(&String.capitalize/1)
+    |> Enum.join(" ")
+  end
+
+  defp common_node_info(node, source, conn) do
+    [
+      {"Name", node.name},
+      {"Source", link(source.name, to: source_path(conn, :show, source.uuid))}
+    ]
+  end
+
+  defp specific_node_info(node = %Node{kind: "column"}, _, _) do
+    [
+      {"Data Types", node.types}
+    ]
+  end
+
+  defp specific_node_info(node = %Node{kind: "message"}, _, _) do
+    [
+      {"Data Types", node.types}
+    ]
+  end
+
+  defp specific_node_info(_, _, _), do: []
 end

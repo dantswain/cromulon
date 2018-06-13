@@ -9,7 +9,23 @@ attempt to make connections to external services.  Please make sure that
 </ul>
 
 <%= form_for @conn, source_path(@conn, :create), [as: :source], fn f -> %>
-  <%= label(f, :connection_string, "Connection String") %>
-  <%= text_input f, :connection_string %>
-  <%= submit "Add" %>
+  <fieldset>
+    <legend>Postgres Database</legend>
+    <%= label(f, :connection_string, "Connection String") %>
+    <%= text_input f, :connection_string %>
+    <%= hidden_input f, :type, value: "postgres" %>
+    <%= submit "Add" %>
+  </fieldset>
+<% end %>
+
+<%= form_for @conn, source_path(@conn, :create), [as: :source], fn f -> %>
+  <fieldset>
+    <legend>Kafka Cluster</legend>
+    <%= label(f, :host, "Bootstrap Host") %>
+    <%= text_input f, :host %>
+    <%= label(f, :port, "Port") %>
+    <%= number_input f, :port, value: 9092, min: 0, step: 1 %>
+    <%= hidden_input f, :type, value: "kafka" %>
+    <%= submit "Add" %>
+  </fieldset>
 <% end %>

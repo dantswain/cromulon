@@ -52,8 +52,8 @@ defmodule Cromulon.Mixfile do
       {:distillery, "~>1.5.2"},
       {:inflex, "~> 1.10.0"},
       {:snappy,
-        git: "https://github.com/fdmanana/snappy-erlang-nif.git",
-        ref: "0951a1bf8e58141b3c439bebe1f2992688298631"},
+       git: "https://github.com/fdmanana/snappy-erlang-nif.git",
+       ref: "0951a1bf8e58141b3c439bebe1f2992688298631"}
     ]
   end
 

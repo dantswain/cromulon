@@ -14,11 +14,12 @@ defmodule Cromulon.SchemaInference do
     e ->
       Logger.warn(fn ->
         if parent_node do
-          "Unable to infer schema for #{parent_node.name}: #{inspect e}"
+          "Unable to infer schema for #{parent_node.name}: #{inspect(e)}"
         else
-          "Unable to infer schema: #{inspect e}"
+          "Unable to infer schema: #{inspect(e)}"
         end
       end)
+
       []
   end
 
@@ -37,7 +38,7 @@ defmodule Cromulon.SchemaInference do
         end)
       end)
 
-    Enum.map(field_names, fn(field_name) ->
+    Enum.map(field_names, fn field_name ->
       values = Map.get(collected, field_name)
       type = detect_type(values)
       node = %Node{uuid: UUID.generate(), name: field_name, kind: "message"}
@@ -46,9 +47,15 @@ defmodule Cromulon.SchemaInference do
         [{:list, [:map]}] ->
           flat_values = List.flatten(values)
           message_schema = infer_schema(flat_values, node)
+
           if parent_node do
-            edge = %Edge{from_uuid: node.uuid, to_uuid: parent_node.uuid,
-              label: "MESSAGE", uuid: UUID.generate()}
+            edge = %Edge{
+              from_uuid: node.uuid,
+              to_uuid: parent_node.uuid,
+              label: "MESSAGE",
+              uuid: UUID.generate()
+            }
+
             [%{node | types: "List of message"}, edge, message_schema]
           else
             [%{node | types: "message"}, message_schema]
@@ -56,9 +63,15 @@ defmodule Cromulon.SchemaInference do
 
         [:map] ->
           message_schema = infer_schema(values, node)
+
           if parent_node do
-            edge = %Edge{from_uuid: node.uuid, to_uuid: parent_node.uuid,
-              label: "MESSAGE", uuid: UUID.generate()}
+            edge = %Edge{
+              from_uuid: node.uuid,
+              to_uuid: parent_node.uuid,
+              label: "MESSAGE",
+              uuid: UUID.generate()
+            }
+
             [%{node | types: "message"}, edge, message_schema]
           else
             [%{node | types: "message"}, message_schema]
@@ -66,8 +79,13 @@ defmodule Cromulon.SchemaInference do
 
         type ->
           if parent_node do
-            edge = %Edge{from_uuid: node.uuid, to_uuid: parent_node.uuid,
-              label: "MESSAGE", uuid: UUID.generate()}
+            edge = %Edge{
+              from_uuid: node.uuid,
+              to_uuid: parent_node.uuid,
+              label: "MESSAGE",
+              uuid: UUID.generate()
+            }
+
             [%{node | types: type_label(type)}, edge]
           else
             %{node | types: type_label(type)}
