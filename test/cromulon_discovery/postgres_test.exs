@@ -43,7 +43,8 @@ defmodule CromulonDiscoveryTest.PostgresTest do
              connection_info: url(),
              kind: "postgres database",
              attributes: %{},
-             uuid: source.uuid
+             uuid: source.uuid,
+             identity: "localhost-cromulon_discovery_test"
            }
   end
 

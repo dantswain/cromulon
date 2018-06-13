@@ -10,6 +10,15 @@ defmodule Cromulon.Discovery.Postgres do
   alias Cromulon.Schema.Node
   alias Cromulon.Schema.Edge
 
+  def get_identity(url) do
+    query =
+      "SELECT setting AS host, current_database() FROM pg_settings WHERE name = 'listen_addresses'"
+
+    results = query!(url, query, [])
+    [[host, database_name]] = results.rows
+    "#{host}-#{database_name}"
+  end
+
   def describe_database(url) do
     source = describe_source(url)
     schemas = describe_schemas(source)
@@ -38,11 +47,14 @@ defmodule Cromulon.Discovery.Postgres do
     parsed_url = URI.parse(url)
     "/" <> name = parsed_url.path
 
+    identity = get_identity(url)
+
     %Source{
       name: name,
       connection_info: url,
       kind: "postgres database",
-      uuid: UUID.generate()
+      uuid: UUID.generate(),
+      identity: identity
     }
   end
 

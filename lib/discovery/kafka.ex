@@ -55,6 +55,13 @@ defmodule Cromulon.Discovery.Kafka do
 
   require Logger
 
+  def get_identity(seed_host, seed_port) do
+    with_kafkaex([{seed_host, seed_port}], fn worker ->
+      metadata = KafkaEx.metadata(worker_name: worker)
+      urls_from_brokers(metadata.brokers)
+    end)
+  end
+
   def describe_cluster(seed_host, seed_port) do
     with_kafkaex([{seed_host, seed_port}], fn worker ->
       metadata = KafkaEx.metadata(worker_name: worker)
@@ -73,6 +80,7 @@ defmodule Cromulon.Discovery.Kafka do
     %Source{
       name: "#{seed_host}:#{seed_port}",
       connection_info: urls_from_brokers(metadata.brokers),
+      identity: urls_from_brokers(metadata.brokers),
       kind: "kafka cluster",
       uuid: UUID.generate()
     }

@@ -35,11 +35,23 @@ defmodule CromulonWeb.SourceController do
     schema =
       case source["type"] do
         "postgres" ->
-          PGDiscovery.describe_database(source["connection_string"])
+          identity = PGDiscovery.get_identity(source["connection_string"])
+
+          if Schema.source_by_identity(identity, bolt) do
+            []
+          else
+            PGDiscovery.describe_database(source["connection_string"])
+          end
 
         "kafka" ->
           port = String.to_integer(source["port"])
-          KafkaDiscovery.describe_cluster(source["host"], port)
+          identity = KafkaDiscovery.get_identity(source["host"], port)
+
+          if Schema.source_by_identity(identity, bolt) do
+            []
+          else
+            KafkaDiscovery.describe_cluster(source["host"], port)
+          end
       end
 
     Schema.ingest(schema, bolt)

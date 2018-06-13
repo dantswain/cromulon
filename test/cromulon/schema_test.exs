@@ -70,4 +70,14 @@ defmodule Cromulon.SchemaTest do
     [node] = nodes
     assert node.name == "public"
   end
+
+  test "getting a source by identity", %{conn: conn} do
+    full_schema = PGDiscovery.describe_database(url())
+    Schema.ingest(full_schema, conn)
+
+    source = Schema.source_by_identity("localhost-cromulon_discovery_test", conn)
+    assert source.connection_info == url()
+
+    assert Schema.source_by_identity("foo", conn) == nil
+  end
 end

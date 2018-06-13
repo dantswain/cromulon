@@ -12,6 +12,22 @@ defmodule Cromulon.Schema do
   def ensure_uuid(m = %{uuid: nil}), do: %{m | uuid: UUID.generate()}
   def ensure_uuid(m), do: m
 
+  def source_by_identity(identity, conn) do
+    cypher = """
+    MATCH (s:Source {identity: $identity}) RETURN s
+    """
+
+    result =
+      conn
+      |> Bolt.query!(cypher, %{identity: identity})
+      |> Enum.map(fn s -> Source.from_bolt(Map.get(s, "s")) end)
+
+    case result do
+      [source] -> source
+      [] -> nil
+    end
+  end
+
   def select_nodes(list) when is_list(list) do
     Enum.filter(list, fn
       %Node{} -> true

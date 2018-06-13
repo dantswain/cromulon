@@ -11,6 +11,7 @@ defmodule Cromulon.Schema.Source do
     field(:kind, :string)
     field(:attributes, :map, default: %{})
     field(:uuid, :string)
+    field(:identity, :string)
   end
 
   def from_bolt(node = %BoltNode{}) do
@@ -19,7 +20,8 @@ defmodule Cromulon.Schema.Source do
       connection_info: node.properties["connection_info"],
       kind: node.properties["kind"],
       attributes: Poison.decode!(node.properties["attributes"]),
-      uuid: node.properties["uuid"]
+      uuid: node.properties["uuid"],
+      identity: node.properties["identity"]
     }
   end
 end
