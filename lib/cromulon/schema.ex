@@ -75,6 +75,16 @@ defmodule Cromulon.Schema do
     }
   end
 
+  def get_node(uuid, conn) do
+    cypher = """
+    MATCH (n:Node { uuid: $uuid }) RETURN n
+    """
+
+    [result] = Bolt.query!(conn, cypher, %{"uuid" => uuid})
+
+    Node.from_bolt(Map.get(result, "n"))
+  end
+
   def describe_node(uuid, conn) do
     cypher = """
     MATCH (s:Source) <-[*]- (n:Node {uuid: $uuid}) RETURN s, n LIMIT 1

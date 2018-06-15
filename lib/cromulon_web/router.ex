@@ -21,6 +21,7 @@ defmodule CromulonWeb.Router do
 
     resources("/sources", SourceController, param: "source_uuid", except: [:delete])
     resources("/nodes", NodeController, param: "node_uuid", only: [:show])
+    resources("/samples", SampleController, param: "node_uuid", only: [:show])
   end
 
   # Other scopes may use custom stacks.

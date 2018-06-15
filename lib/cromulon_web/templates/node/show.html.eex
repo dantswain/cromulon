@@ -33,3 +33,9 @@
 </ul>
 <% end %>
 <% end %>
+
+<%= if @node.kind == "kafka topic" do %>
+  <h3>Sample messages</h3>
+  <%= sample_messages_link(@node, @conn) %>
+  <%= show_sample_messages(@node) %>
+<% end %>

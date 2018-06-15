@@ -40,6 +40,29 @@ defmodule CromulonWeb.NodeView do
     |> Inflex.inflect(len)
   end
 
+  def show_sample_messages(node = %Node{kind: "kafka topic"}) do
+    case Map.get(node.attributes, "sample_messages") do
+      nil ->
+        "None available"
+
+      messages ->
+        for message <- messages do
+          decoded = Poison.decode!(message)
+          raw("<pre>" <> Poison.encode!(decoded, pretty: true) <> "</pre>")
+        end
+    end
+  end
+
+  def sample_messages_link(node = %Node{kind: "kafka topic"}, conn) do
+    case Map.get(node.attributes, "sample_messages") do
+      nil ->
+        nil
+
+      _messages ->
+        link("Download", to: sample_path(conn, :show, node.uuid))
+    end
+  end
+
   defp titleize(name) do
     name
     |> String.split(["_", " "])
@@ -47,7 +70,7 @@ defmodule CromulonWeb.NodeView do
     |> Enum.join(" ")
   end
 
-  defp common_node_info(node, source, conn) do
+  defp common_node_info(_node, source, conn) do
     [
       {"Source", link(source.name, to: source_path(conn, :show, source.uuid))}
     ]
