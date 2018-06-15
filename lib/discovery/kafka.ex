@@ -15,35 +15,6 @@ defmodule Cromulon.Discovery.Kafka do
     end
   end
 
-  defmodule Cluster do
-    @moduledoc false
-
-    use Ecto.Schema
-
-    @primary_key false
-    schema "kafka_clusters" do
-      field(:urls, :string)
-      field(:name, :string)
-      field(:metadata, :any, virtual: true)
-      embeds_many(:topics, Cromulon.Discovery.Kafka.Topic)
-    end
-
-    def topic_from_name(cluster, topic_name) do
-      Enum.find(cluster.topics, fn t -> t.name == topic_name end)
-    end
-
-    def uris(cluster) do
-      cluster.urls
-      |> String.split(",")
-      |> Enum.map(fn b -> parse_broker_uri(b) end)
-    end
-
-    defp parse_broker_uri(host_port) do
-      [host, port_string] = String.split(host_port, ":", parts: 2)
-      {host, String.to_integer(port_string)}
-    end
-  end
-
   alias Cromulon.SchemaInference
   alias KafkaEx.Protocol.Metadata.TopicMetadata
 
@@ -119,7 +90,9 @@ defmodule Cromulon.Discovery.Kafka do
 
       if Enum.all?(messages, &String.valid?/1) do
         node = %{node | attributes: Map.put(node.attributes, :sample_messages, messages)}
-        message_schema = SchemaInference.from_sample_messages(messages, node)
+
+        message_schema =
+          SchemaInference.from_sample_messages(messages, node, "TOPIC_MESSAGE_FIELD")
       else
         message_schema = []
       end

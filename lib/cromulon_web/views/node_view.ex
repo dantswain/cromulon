@@ -10,7 +10,8 @@ defmodule CromulonWeb.NodeView do
     "TABLE" => "schema",
     "COLUMN" => "table",
     "FOREIGN_KEY" => "foreign table",
-    "MESSAGE" => "parent message"
+    "MESSAGE" => "parent message",
+    "TOPIC_MESSAGE_FIELD" => "topic"
   }
 
   def node_info(node = %Node{}, source = %Source{}, conn) do
@@ -19,7 +20,7 @@ defmodule CromulonWeb.NodeView do
 
   def describe_node_kind(%Node{kind: kind}), do: titleize(kind)
 
-  def child_node_info(node = %Node{}), do: node.types
+  def child_node_info(node = %Node{}), do: Enum.join(node.types, ", ")
 
   def describe_inbound_relationships(name, len) do
     name

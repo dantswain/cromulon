@@ -6,10 +6,10 @@ defmodule Cromulon.SchemaInference do
   alias Cromulon.Schema.Node
   alias Cromulon.Schema.Edge
 
-  def from_sample_messages(messages, parent_node \\ nil) do
+  def from_sample_messages(messages, parent_node \\ nil, parent_edge_label \\ "MESSAGE") do
     messages = try_json(messages)
 
-    infer_schema(messages, parent_node)
+    infer_schema(messages, parent_node, parent_edge_label)
   rescue
     e ->
       Logger.warn(fn ->
@@ -23,7 +23,7 @@ defmodule Cromulon.SchemaInference do
       []
   end
 
-  def infer_schema(messages, parent_node \\ nil) do
+  def infer_schema(messages, parent_node \\ nil, parent_edge_label \\ "MESSAGE") do
     field_names =
       messages
       |> Enum.map(&Map.keys/1)
@@ -41,7 +41,7 @@ defmodule Cromulon.SchemaInference do
     Enum.map(field_names, fn field_name ->
       values = Map.get(collected, field_name)
       type = detect_type(values)
-      node = %Node{uuid: UUID.generate(), name: field_name, kind: "message"}
+      node = %Node{uuid: UUID.generate(), name: field_name, kind: "message field"}
 
       case type do
         [{:list, [:map]}] ->
@@ -52,7 +52,7 @@ defmodule Cromulon.SchemaInference do
             edge = %Edge{
               from_uuid: node.uuid,
               to_uuid: parent_node.uuid,
-              label: "MESSAGE",
+              label: parent_edge_label,
               uuid: UUID.generate()
             }
 
@@ -68,7 +68,7 @@ defmodule Cromulon.SchemaInference do
             edge = %Edge{
               from_uuid: node.uuid,
               to_uuid: parent_node.uuid,
-              label: "MESSAGE",
+              label: parent_edge_label,
               uuid: UUID.generate()
             }
 
@@ -82,7 +82,7 @@ defmodule Cromulon.SchemaInference do
             edge = %Edge{
               from_uuid: node.uuid,
               to_uuid: parent_node.uuid,
-              label: "MESSAGE",
+              label: parent_edge_label,
               uuid: UUID.generate()
             }
 
