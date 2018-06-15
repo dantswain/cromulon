@@ -66,5 +66,13 @@ defmodule CromulonWeb.NodeView do
     ]
   end
 
+  defp specific_node_info(node = %Node{kind: "kafka topic"}, _, _) do
+    partition_ids = node.attributes["partition_ids"]
+
+    [
+      {"Partition Count", Integer.to_string(length(partition_ids))}
+    ]
+  end
+
   defp specific_node_info(_, _, _), do: []
 end
