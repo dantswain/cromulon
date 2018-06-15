@@ -49,7 +49,6 @@ defmodule CromulonWeb.NodeView do
 
   defp common_node_info(node, source, conn) do
     [
-      {"Name", node.name},
       {"Source", link(source.name, to: source_path(conn, :show, source.uuid))}
     ]
   end

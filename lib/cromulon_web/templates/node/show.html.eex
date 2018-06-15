@@ -1,4 +1,4 @@
-<h2><%= describe_node_kind(@node) %></h2>
+<h2><%= describe_node_kind(@node) %>: <%= @node.name %></h2>
 
 <h3>Info</h3>
 <dl>
