@@ -20,7 +20,12 @@ defmodule CromulonWeb.NodeView do
 
   def describe_node_kind(%Node{kind: kind}), do: titleize(kind)
 
-  def child_node_info(node = %Node{}), do: Enum.join(node.types, ", ")
+  def child_node_info(node = %Node{}) do
+    node.types
+    |> List.wrap()
+    |> Enum.map(&String.downcase/1)
+    |> Enum.join(", ")
+  end
 
   def describe_inbound_relationships(name, len) do
     name
