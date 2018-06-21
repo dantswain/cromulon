@@ -98,6 +98,7 @@ defmodule Cromulon.SchemaInference do
     Enum.map(messages, &Poison.decode!/1)
   end
 
+  defp type_label({:list, []}), do: "Empty list"
   defp type_label({:list, x}), do: "List of " <> Enum.join(type_label(x), ",")
   defp type_label(x) when is_list(x), do: Enum.map(x, &type_label/1)
   defp type_label(x), do: Atom.to_string(x)
