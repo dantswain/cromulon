@@ -57,6 +57,10 @@ defmodule CromulonWeb.NodeView do
     end
   end
 
+  def show_sample_messages?(node = %Node{}) do
+    node.kind == "kafka topic" && !Enum.empty?(Map.get(node.attributes, "sample_messages"))
+  end
+
   def sample_messages_link(node = %Node{kind: "kafka topic"}, conn) do
     case Map.get(node.attributes, "sample_messages") do
       nil ->
