@@ -4,7 +4,7 @@
   <dt>Name</dt>
   <dd><%= @source.name %></dd>
   <dt>Connection info</dt>
-  <dd><%= @source.connection_info %></dd>
+  <dd><div class="connection-info"><%= @source.connection_info %></div></dd>
 </dl>
 
 <h3><%= describe_source_nodes(@source) %></h3>
