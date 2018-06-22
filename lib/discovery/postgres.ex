@@ -28,6 +28,7 @@ defmodule Cromulon.Discovery.Postgres do
     schemas = describe_schemas(source)
 
     Logger.debug(fn -> "Exploring schema of #{url}" end)
+
     tables_columns_fks =
       schemas
       |> Enum.filter(&Node.kind?(&1, "postgres schema"))
@@ -36,6 +37,7 @@ defmodule Cromulon.Discovery.Postgres do
         tables = describe_tables(source, schema)
 
         Logger.debug(fn -> "Finding columns for #{schema.name}" end)
+
         columns =
           tables
           |> Enum.filter(&Node.kind?(&1, "table"))
@@ -47,6 +49,7 @@ defmodule Cromulon.Discovery.Postgres do
       end)
 
     Logger.debug(fn -> "Done exploring #{url}" end)
+
     [source, schemas, tables_columns_fks]
     |> List.flatten()
     |> Enum.map(&Schema.ensure_uuid(&1))
@@ -112,6 +115,7 @@ defmodule Cromulon.Discovery.Postgres do
         table = %Node{kind: "table"}
       ) do
     Logger.debug(fn -> "Finding columns for #{schema.name}.#{table.name}" end)
+
     Enum.flat_map(list_columns(source.connection_info, schema.name, table.name), fn [
                                                                                       column_name,
                                                                                       column_type

@@ -62,6 +62,7 @@ defmodule CromulonWeb.NodeView do
           case Poison.decode(message) do
             {:ok, decoded} ->
               raw("<pre>" <> Poison.encode!(decoded, pretty: true) <> "</pre>")
+
             {:error, _} ->
               raw("<pre>" <> message <> "</pre>")
           end

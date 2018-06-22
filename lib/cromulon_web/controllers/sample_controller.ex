@@ -29,6 +29,7 @@ defmodule CromulonWeb.SampleController do
           {:ok, _} -> true
           _ -> false
         end
+
       _ ->
         false
     end
