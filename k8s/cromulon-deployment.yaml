@@ -25,7 +25,7 @@ spec:
           value: bolt://neo4j:m0data4u@10.176.185.248:31170
         - name: PORT
           value: "4000"
-        image: dcdocker1.simpli.fi:5000/cromulon:t8
+        image: dcdocker1.simpli.fi:5000/cromulon:t9
         name: cromulon
         ports:
         - containerPort: 4000
