@@ -13,11 +13,19 @@
 
 <%= for {label, inbound} <- @inbound_by_label do %> 
 <h4><%= describe_inbound_relationships(label, length(inbound)) %></h4>
+<%= if label == "TABLE" do %>
+<ul>
+  <%= for %{node: node} <- inbound do %>
+    <li><%= node_link(node, @conn) %></li>
+  <% end %>
+</ul>
+<% else %>
 <ul>
   <%= for %{node: node} <- inbound do %>
     <li><%= node_link(node, @conn) %> - <%= child_node_info(node) %></li>
   <% end %>
 </ul>
+<% end %>
 <% end %>
 <% end %>
 
@@ -34,10 +42,12 @@
 <% end %>
 <% end %>
 
+<%= if @source.kind == "kafka cluster" do %>
 <%= if show_sample_messages?(@node) do %>
   <h3>Sample messages</h3>
   <%= sample_messages_link(@node, @conn) %>
   <%= show_sample_messages(@node) %>
 <% else %>
   No sample messages available.
+<% end %>
 <% end %>

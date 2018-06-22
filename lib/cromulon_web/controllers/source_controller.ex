@@ -40,6 +40,7 @@ defmodule CromulonWeb.SourceController do
           if Schema.source_by_identity(identity, bolt) do
             []
           else
+            Logger.debug(fn -> "Scanning database #{source["connection_string"]}" end)
             PGDiscovery.describe_database(source["connection_string"])
           end
 
@@ -54,6 +55,7 @@ defmodule CromulonWeb.SourceController do
           end
       end
 
+    Logger.debug(fn -> "Ingesting schema for #{source["connection_string"]}" end)
     Schema.ingest(schema, bolt)
 
     redirect(conn, to: source_path(conn, :index))

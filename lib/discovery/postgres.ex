@@ -10,6 +10,8 @@ defmodule Cromulon.Discovery.Postgres do
   alias Cromulon.Schema.Node
   alias Cromulon.Schema.Edge
 
+  require Logger
+
   def get_identity(url) do
     query =
       "SELECT setting AS host, current_database() FROM pg_settings WHERE name = 'listen_addresses'"
@@ -20,24 +22,31 @@ defmodule Cromulon.Discovery.Postgres do
   end
 
   def describe_database(url) do
+    Logger.debug(fn -> "Describing source for #{url}" end)
     source = describe_source(url)
+    Logger.debug(fn -> "Describing schemas for #{url}" end)
     schemas = describe_schemas(source)
 
+    Logger.debug(fn -> "Exploring schema of #{url}" end)
     tables_columns_fks =
       schemas
       |> Enum.filter(&Node.kind?(&1, "postgres schema"))
       |> Enum.flat_map(fn schema ->
+        Logger.debug(fn -> "Finding tables for #{schema.name}" end)
         tables = describe_tables(source, schema)
 
+        Logger.debug(fn -> "Finding columns for #{schema.name}" end)
         columns =
           tables
           |> Enum.filter(&Node.kind?(&1, "table"))
           |> Enum.flat_map(fn t -> describe_columns(source, schema, t) end)
 
+        Logger.debug(fn -> "Finding FK relationships for #{schema.name}" end)
         fks = find_fks(tables, columns)
         [tables, columns, fks]
       end)
 
+    Logger.debug(fn -> "Done exploring #{url}" end)
     [source, schemas, tables_columns_fks]
     |> List.flatten()
     |> Enum.map(&Schema.ensure_uuid(&1))
@@ -102,6 +111,7 @@ defmodule Cromulon.Discovery.Postgres do
         schema = %Node{kind: "postgres schema"},
         table = %Node{kind: "table"}
       ) do
+    Logger.debug(fn -> "Finding columns for #{schema.name}.#{table.name}" end)
     Enum.flat_map(list_columns(source.connection_info, schema.name, table.name), fn [
                                                                                       column_name,
                                                                                       column_type
