@@ -93,16 +93,19 @@ defmodule Cromulon.Schema do
     [source_result] = Bolt.query!(conn, cypher, %{"uuid" => uuid})
 
     cypher = """
-    MATCH (:Node {uuid: $uuid}) <-[r]- (n:Node) RETURN r, n
+    MATCH (n0:Node {uuid: $uuid}) <-[r]- (n:Node)
+    OPTIONAL MATCH (n0) <-[r:FOREIGN_KEY]- (n) -[:COLUMN]-> (f)
+    RETURN r, n, f
     """
 
     inbound_results = Bolt.query!(conn, cypher, %{"uuid" => uuid})
 
     inbound =
-      Enum.map(inbound_results, fn %{"r" => edge, "n" => node} ->
-        %{
+      Enum.map(inbound_results, fn %{"r" => edge, "n" => node, "f" => foreign} ->
+        node_edge = %{
           edge: Edge.from_bolt(edge),
-          node: Node.from_bolt(node)
+          node: Node.from_bolt(node),
+          foreign: maybe_node(foreign)
         }
       end)
 
@@ -127,6 +130,9 @@ defmodule Cromulon.Schema do
       outbound: outbound
     }
   end
+
+  defp maybe_node(nil), do: nil
+  defp maybe_node(node), do: Node.from_bolt(node)
 
   # The order in which we need to ingest elements in the graph
   #   lower number is earlier (e.g., edges probably need to go last)

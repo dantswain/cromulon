@@ -18,6 +18,18 @@ defmodule CromulonWeb.NodeView do
     common_node_info(node, source, conn) ++ specific_node_info(node, source, conn)
   end
 
+  def child_node_li("TABLE", node = %Node{}, conn, _) do
+    node_link(node, conn)
+  end
+
+  def child_node_li("FOREIGN_KEY", node = %Node{}, conn, foreign) do
+    [node_link(node, conn), " - in ", node_link(foreign, conn)]
+  end
+
+  def child_node_li(_, node = %Node{}, conn, _) do
+    [node_link(node, conn), " - ", child_node_info(node)]
+  end
+
   def describe_node_kind(%Node{kind: kind}), do: titleize(kind)
 
   def child_node_info(node = %Node{}) do
